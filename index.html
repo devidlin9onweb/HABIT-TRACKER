@@ -875,7 +875,9 @@
 
     function saveState() {
       try {
+        appData.updatedAt = Date.now();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        if (typeof cloudPush === 'function') cloudPush();
       } catch (e) {
         console.error('Could not save to localStorage', e);
       }
@@ -1317,8 +1319,147 @@
       }
     }
 
+
+    // ===================== Supabase cloud sync =====================
+    // Paste your own values from Supabase -> Project Settings -> API
+    const SUPABASE_URL = 'https://bviajtintpyxscehppkl.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_yAM5XZz7EXlBvRe55meeGg_Kgv_dohG';
+    const SYNC_CODE_KEY = 'nov2026_tracker_sync_code';
+
+    let pushTimer = null;
+    let applyingRemote = false;
+
+    function syncConfigured() {
+      return !SUPABASE_URL.startsWith('PASTE') && !SUPABASE_KEY.startsWith('PASTE');
+    }
+    function getSyncCode() {
+      try { return localStorage.getItem(SYNC_CODE_KEY) || ''; } catch (e) { return ''; }
+    }
+    function setSyncStatus(text, dot) {
+      const el = document.getElementById('syncStatus');
+      const d = document.getElementById('syncDot');
+      if (el) el.textContent = text;
+      if (d) d.className = 'inline-block w-2 h-2 rounded-full ' + dot;
+    }
+    async function sbRpc(fn, args) {
+      const r = await fetch(SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/rpc/' + fn, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify(args)
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const t = await r.text();
+      return t ? JSON.parse(t) : null;
+    }
+    function applyRemote(remote) {
+      applyingRemote = true;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(remote));
+        loadState();
+        renderTable();
+        generateSquaresGrid();
+        generateCubesGrid();
+        generateFractionsGrid();
+        generateTablesGrid();
+        updateStats();
+        const tc = document.getElementById('tablesContainer');
+        const tx = document.getElementById('collapseTablesText');
+        if (appData.hiddenSections.tablesCollapsed) {
+          tc.classList.add('hidden');
+          if (tx) tx.textContent = 'Expand Tables View';
+        } else {
+          tc.classList.remove('hidden');
+          if (tx) tx.textContent = 'Collapse Tables View';
+        }
+      } finally { applyingRemote = false; }
+    }
+    async function cloudPushNow() {
+      const code = getSyncCode();
+      if (!syncConfigured() || !code) return;
+      try {
+        setSyncStatus('Saving…', 'bg-amber-400');
+        await sbRpc('save_tracker', { p_code: code, p_data: appData });
+        setSyncStatus('Synced', 'bg-emerald-400');
+      } catch (e) {
+        console.error('Cloud save failed', e);
+        setSyncStatus('Offline – saved on this device', 'bg-rose-400');
+      }
+    }
+    function cloudPush() {
+      if (applyingRemote || !syncConfigured() || !getSyncCode()) return;
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(cloudPushNow, 800);
+    }
+    async function cloudPull() {
+      const code = getSyncCode();
+      if (!syncConfigured() || !code) return;
+      try {
+        setSyncStatus('Syncing…', 'bg-amber-400');
+        const remote = await sbRpc('get_tracker', { p_code: code });
+        const localTs = appData.updatedAt || 0;
+        const remoteTs = (remote && remote.updatedAt) || 0;
+        if (remote && remoteTs > localTs) {
+          applyRemote(remote);
+          setSyncStatus('Synced', 'bg-emerald-400');
+        } else if (!remote || localTs > remoteTs) {
+          if (!appData.updatedAt) appData.updatedAt = Date.now();
+          await cloudPushNow();
+        } else {
+          setSyncStatus('Synced', 'bg-emerald-400');
+        }
+      } catch (e) {
+        console.error('Cloud sync failed', e);
+        setSyncStatus('Offline – saved on this device', 'bg-rose-400');
+      }
+    }
+    async function setupSync() {
+      if (!syncConfigured()) {
+        alert('Cloud sync is not set up yet. Paste your Supabase URL and key into the file first.');
+        return;
+      }
+      const current = getSyncCode();
+      const entered = prompt(
+        'Enter your private sync code (min 8 characters).\nUse the SAME code on every device.\nLeave empty to turn sync off.',
+        current
+      );
+      if (entered === null) return;
+      const code = entered.trim();
+      if (code === '') {
+        try { localStorage.removeItem(SYNC_CODE_KEY); } catch (e) {}
+        setSyncStatus('Sync off', 'bg-slate-500');
+        return;
+      }
+      if (code.length < 8) { alert('Sync code must be at least 8 characters.'); return; }
+      try { localStorage.setItem(SYNC_CODE_KEY, code); } catch (e) {}
+      try {
+        setSyncStatus('Syncing…', 'bg-amber-400');
+        const remote = await sbRpc('get_tracker', { p_code: code });
+        if (remote) {
+          const useCloud = confirm('Cloud data found for this code.\n\nOK = load it here (replaces this device\'s data)\nCancel = keep this device\'s data and overwrite the cloud copy');
+          if (useCloud) { applyRemote(remote); setSyncStatus('Synced', 'bg-emerald-400'); return; }
+        }
+        if (!appData.updatedAt) appData.updatedAt = Date.now();
+        await cloudPushNow();
+      } catch (e) {
+        console.error(e);
+        setSyncStatus('Offline – saved on this device', 'bg-rose-400');
+      }
+    }
+    function cloudInit() {
+      const btn = document.getElementById('syncBtn');
+      if (btn) btn.classList.remove('hidden');
+      if (!syncConfigured()) { setSyncStatus('Set up sync', 'bg-slate-500'); return; }
+      if (!getSyncCode()) { setSyncStatus('Sync off', 'bg-slate-500'); return; }
+      cloudPull();
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') cloudPull();
+      });
+    }
+    // ===============================================================
+
     window.addEventListener('DOMContentLoaded', () => {
       loadState();
+      setTimeout(() => cloudInit(), 0);
       renderTable();
       generateSquaresGrid();
       generateCubesGrid();
@@ -1332,5 +1473,8 @@
       }
     });
   </script>
+  <button id="syncBtn" onclick="setupSync()" class="no-print hidden fixed bottom-4 right-4 z-40 flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/95 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 shadow-lg">
+    <span id="syncDot" class="inline-block w-2 h-2 rounded-full bg-slate-500"></span>☁ <span id="syncStatus">Sync</span>
+  </button>
 </body>
 </html>

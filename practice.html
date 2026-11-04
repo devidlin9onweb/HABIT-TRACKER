@@ -301,9 +301,9 @@
           <div>
             <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Multiplier Range</label>
             <select id="multiplierRange" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
-              <option value="1-10" selected>1 – 10 (Standard)</option>
-              <option value="1-12">1 – 12 (Extended)</option>
-              <option value="6-12">6 – 12 (Harder)</option>
+              <option value="1-10" selected>1 – 10 (Standard, skips 1, 2, 10)</option>
+              <option value="1-12">1 – 12 (Extended, skips 1, 2, 10)</option>
+              <option value="6-12">6 – 12 (Harder, skips 10)</option>
               <option value="11-20">11 – 20 (Challenge)</option>
             </select>
           </div>
@@ -650,6 +650,9 @@
       savePracticeConfig();
     }
 
+    // Multipliers that are never asked (too easy to be useful practice)
+    const EXCLUDED_MULTIPLIERS = [1, 2, 10];
+
     function generateQuestions() {
       const count = parseInt(document.getElementById('questionCount').value);
       const [minM, maxM] = document.getElementById('multiplierRange').value.split('-').map(Number);
@@ -660,6 +663,7 @@
       const allQuestions = [];
       for (const table of tables) {
         for (let m = minM; m <= maxM; m++) {
+          if (EXCLUDED_MULTIPLIERS.includes(m)) continue;
           allQuestions.push({ table, multiplier: m, answer: table * m });
         }
       }

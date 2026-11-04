@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiplication Practice Lab — November 2026</title>
+  <link rel="icon" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              table: '#8b5cf6',   // vibrant purple
+              square: '#0ea5e9',  // sky blue
+              cube: '#06b6d4',    // cyan/teal
+              fraction: '#10b981',// emerald
+              reading: '#f59e0b', // amber
+              hons: '#f43f5e',    // rose
+              pw: '#6366f1',      // indigo
+              chant: '#d946ef',   // fuchsia
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: #0f172a !important;
+        color: #f8fafc !important;
+        font-size: 8pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-page-break {
+        page-break-before: always;
+      }
+      .tracker-table-wrap {
+        overflow: visible !important;
+      }
+      table {
+        font-size: 7pt !important;
+      }
+      th, td {
+        padding: 2px 3px !important;
+      }
+    }
+
+    /* Interactive Checkbox Ripple & Transition */
+    .habit-check {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border: 2px solid;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .habit-check:hover {
+      transform: scale(1.12);
+    }
+    .habit-check:checked {
+      background-position: center;
+      background-repeat: no-repeat;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    }
+
+    /* Discipline-specific colors in Dark Mode */
+    .chk-table { border-color: #7c3aed; background-color: rgba(139, 92, 246, 0.12); }
+    .chk-table:checked { background-color: #8b5cf6; border-color: #a78bfa; box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); }
+    
+    .chk-square { border-color: #0284c7; background-color: rgba(14, 165, 233, 0.12); }
+    .chk-square:checked { background-color: #0ea5e9; border-color: #38bdf8; box-shadow: 0 0 10px rgba(14, 165, 233, 0.5); }
+
+    .chk-cube { border-color: #0891b2; background-color: rgba(6, 182, 212, 0.12); }
+    .chk-cube:checked { background-color: #06b6d4; border-color: #22d3ee; box-shadow: 0 0 10px rgba(6, 182, 212, 0.5); }
+
+    .chk-fraction { border-color: #059669; background-color: rgba(16, 185, 129, 0.12); }
+    .chk-fraction:checked { background-color: #10b981; border-color: #34d399; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+
+    .chk-reading { border-color: #d97706; background-color: rgba(245, 158, 11, 0.12); }
+    .chk-reading:checked { background-color: #f59e0b; border-color: #fbbf24; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+
+    .chk-hons { border-color: #e11d48; background-color: rgba(244, 63, 94, 0.12); }
+    .chk-hons:checked { background-color: #f43f5e; border-color: #fb7185; box-shadow: 0 0 10px rgba(244, 63, 94, 0.5); }
+
+    .chk-pw { border-color: #4f46e5; background-color: rgba(99, 102, 241, 0.12); }
+    .chk-pw:checked { background-color: #6366f1; border-color: #818cf8; box-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
+
+    .chk-chant { border-color: #c026d3; background-color: rgba(217, 70, 239, 0.12); }
+    .chk-chant:checked { background-color: #d946ef; border-color: #f0abfc; box-shadow: 0 0 10px rgba(217, 70, 239, 0.5); }
+
+    /* Sticky first date column on small devices */
+    .sticky-date {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+    }
+
+    /* Flashcard Hide/Blur mode */
+    .answer-hidden {
+      filter: blur(5px);
+      user-select: none;
+      transition: filter 0.2s ease;
+      cursor: pointer;
+    }
+    .answer-hidden:hover {
+      filter: blur(0px);
+    }
+
+    /* Acrylic / Glassmorphism Theme */
+    body {
+      background:
+        radial-gradient(1200px 800px at 15% -10%, rgba(139, 92, 246, 0.22), transparent 60%),
+        radial-gradient(1000px 700px at 100% 0%, rgba(14, 165, 233, 0.18), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(244, 63, 94, 0.14), transparent 60%),
+        linear-gradient(160deg, #0a0e1a 0%, #0b0f19 45%, #070a12 100%);
+      background-attachment: fixed;
+    }
+
+    .acrylic {
+      background: rgba(17, 24, 39, 0.55);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .acrylic-light {
+      background: rgba(24, 32, 48, 0.45);
+      backdrop-filter: blur(14px) saturate(130%);
+      -webkit-backdrop-filter: blur(14px) saturate(130%);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .acrylic-header {
+      background: rgba(11, 15, 25, 0.72);
+      backdrop-filter: blur(22px) saturate(150%);
+      -webkit-backdrop-filter: blur(22px) saturate(150%);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .acrylic-input {
+      background: rgba(2, 6, 23, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .acrylic-input:focus {
+      border-color: rgba(129, 140, 248, 0.6);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Layout fixes */
+    html { color-scheme: dark; }
+    body { min-height: 100vh; }
+    select option { background: #0f172a; color: #f8fafc; }
+    input[type="checkbox"], input[type="radio"] { accent-color: #10b981; }
+    .acrylic-header { border-width: 0 0 1px 0; }
+  </style>
+</head>
+<body class="text-slate-100 antialiased min-h-screen">
+  <!-- Top Hero Bar -->
+  <header class="acrylic-header text-white shadow-2xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2.5 py-0.5 text-xs font-black tracking-wider uppercase bg-gradient-to-r from-emerald-400 via-sky-400 to-purple-400 text-slate-950 rounded-full shadow-lg shadow-emerald-500/20">Practice Lab</span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Standalone
+            </span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2">
+            <img src="logo.jpg" alt="Logo" onerror="this.style.display='none'" class="h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-contain">
+            Multiplication <span class="bg-gradient-to-r from-emerald-400 via-sky-400 to-purple-400 bg-clip-text text-transparent">Practice Lab</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">
+            Timed multiplication quizzes, instant feedback, and per-table analytics.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="index.html" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1e293b] text-slate-300 hover:text-white hover:bg-slate-700 transition-all border border-slate-700">
+            ← Back to Daily Tracker
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div id="viewPractice" class="space-y-6">
+
+      <!-- Practice Lab Banner -->
+      <div class="acrylic text-white rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="max-w-2xl">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full">Practice Lab & Quiz Engine</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">Multiplication Mastery</span>
+          </div>
+          <h2 class="text-2xl font-black tracking-tight">Interactive Multiplication Practice</h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            Configure your practice set, take timed quizzes, and review detailed analytics with instant feedback.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="startPracticeBtn" onclick="startPractice()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition">
+            ▶ Start Quiz
+          </button>
+        </div>
+      </div>
+
+      <!-- Configuration Panel -->
+      <div id="practiceConfig" class="acrylic rounded-2xl p-5 shadow-xl space-y-5">
+        <h3 class="font-black text-sm text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+          <span>⚙️</span> Quiz Configuration
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Table Selection -->
+          <div class="md:col-span-2">
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Select Tables (1-30)</label>
+            <div id="tableCheckboxes" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-48 overflow-y-auto p-2 acrylic-light rounded-xl">
+              <!-- Generated dynamically -->
+            </div>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <button onclick="selectAllTables()" class="px-3 py-1.5 text-xs font-bold bg-indigo-950/80 text-indigo-300 border border-indigo-800 hover:bg-indigo-900 rounded-lg transition">All</button>
+              <button onclick="selectNoneTables()" class="px-3 py-1.5 text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 rounded-lg transition">None</button>
+              <button onclick="selectCommonTables()" class="px-3 py-1.5 text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-800 hover:bg-amber-900 rounded-lg transition">Core (2-12)</button>
+              <button onclick="selectAdvancedTables()" class="px-3 py-1.5 text-xs font-bold bg-purple-950/80 text-purple-300 border border-purple-800 hover:bg-purple-900 rounded-lg transition">Advanced (13-20)</button>
+            </div>
+          </div>
+
+          <!-- Question Count -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Questions per Quiz</label>
+            <select id="questionCount" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="5">5 Questions</option>
+              <option value="10" selected>10 Questions</option>
+              <option value="15">15 Questions</option>
+              <option value="20">20 Questions</option>
+              <option value="25">25 Questions</option>
+              <option value="30">30 Questions</option>
+            </select>
+          </div>
+
+          <!-- Multiplier Range -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Multiplier Range</label>
+            <select id="multiplierRange" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="1-10" selected>1 – 10 (Standard)</option>
+              <option value="1-12">1 – 12 (Extended)</option>
+              <option value="6-12">6 – 12 (Harder)</option>
+              <option value="11-20">11 – 20 (Challenge)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-800/50">
+          <!-- Answer Mode -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Answer Mode</label>
+            <select id="answerMode" onchange="savePracticeConfig()" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="choice" selected>Multiple Choice</option>
+              <option value="type">Type the Answer</option>
+            </select>
+          </div>
+
+          <!-- Question Mode -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Question Mode</label>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="questionMode" value="single" checked onchange="updatePracticeMode()" class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+                <span class="text-xs text-slate-300">One at a Time</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="questionMode" value="list" onchange="updatePracticeMode()" class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+                <span class="text-xs text-slate-300">List View</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Timer -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Time Limit</label>
+            <select id="timeLimit" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="0">No Timer</option>
+              <option value="30">30 seconds</option>
+              <option value="60" selected>60 seconds</option>
+              <option value="90">90 seconds</option>
+              <option value="120">2 minutes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 border-t border-slate-800/50">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="shuffleQuestions" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+            <span class="text-xs text-slate-300">Shuffle Questions</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="shuffleOptions" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+            <span class="text-xs text-slate-300">Shuffle Options</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="showTimer" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+            <span class="text-xs text-slate-300">Show Timer</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Quiz Interface -->
+      <div id="practiceQuiz" class="hidden space-y-5 max-w-4xl mx-auto w-full">
+        <!-- Progress Header -->
+        <div class="acrylic rounded-2xl p-4 shadow-xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-4">
+              <div id="questionCounter" class="text-sm font-bold text-white">Question 1 of 10</div>
+              <div id="quizTimer" class="text-lg font-mono font-black text-sky-400 hidden">01:00</div>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+              <div id="answerModeToggle" class="inline-flex self-start p-1 rounded-xl bg-slate-900/80 border border-slate-700" role="group" aria-label="Answer mode">
+                <button type="button" id="amBtn_choice" onclick="setAnswerMode('choice')" class="px-3 py-1 rounded-lg text-xs font-bold transition">Choices</button>
+                <button type="button" id="amBtn_type" onclick="setAnswerMode('type')" class="px-3 py-1 rounded-lg text-xs font-bold transition">Type</button>
+              </div>
+              <div id="progressBarContainer" class="w-full sm:w-56">
+                <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="quizProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-sky-400 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single Question View -->
+        <div id="singleQuestionView" class="acrylic rounded-2xl p-6 shadow-xl">
+          <div id="currentQuestion" class="text-center mb-6">
+            <div class="text-4xl sm:text-5xl font-black font-mono text-white mb-2" id="questionDisplay">7 × 8 = ?</div>
+            <div class="text-xs text-slate-400" id="questionMeta">Table 7 • Multiplier 8</div>
+          </div>
+          <div id="optionsGrid" class="grid grid-cols-2 gap-3">
+            <!-- Options generated dynamically -->
+          </div>
+          <div id="typedAnswerWrap" class="hidden max-w-xs mx-auto">
+            <input id="typedAnswer" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Type your answer"
+              oninput="onTypedInput(this)" onkeydown="onTypedKey(event)"
+              class="w-full acrylic-input text-center font-mono text-3xl font-black text-white placeholder-slate-600 rounded-xl px-4 py-3 focus:outline-none">
+            <p class="text-[11px] text-slate-500 text-center mt-2">Numbers only. Press Enter to continue.</p>
+          </div>
+          <div class="flex justify-center mt-6 pt-4 border-t border-slate-800/50">
+            <button id="nextQuestionBtn" onclick="submitAnswer()" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              Next Question
+            </button>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listQuestionView" class="hidden acrylic rounded-2xl p-4 shadow-xl overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-xs text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
+                <th class="py-2 px-3 text-left">#</th>
+                <th class="py-2 px-3 text-left">Question</th>
+                <th class="py-2 px-3 text-left">Your Answer</th>
+                <th class="py-2 px-3 text-left">Status</th>
+              </tr>
+            </thead>
+            <tbody id="listQuestionsBody" class="divide-y divide-slate-800/50">
+              <!-- Generated dynamically -->
+            </tbody>
+          </table>
+          <div class="flex justify-end mt-4 pt-4 border-t border-slate-800/50">
+            <button onclick="finishListQuiz()" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition">
+              Finish Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results & Analytics -->
+      <div id="practiceResults" class="hidden space-y-5">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Accuracy</div>
+            <div id="resultAccuracy" class="text-4xl font-black text-emerald-400 mt-1">0%</div>
+            <div class="text-xs text-slate-500 mt-1">Correct / Total</div>
+          </div>
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Score</div>
+            <div id="resultScore" class="text-4xl font-black text-sky-400 mt-1">0 / 0</div>
+            <div class="text-xs text-slate-500 mt-1">Points Earned</div>
+          </div>
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Time Taken</div>
+            <div id="resultTime" class="text-4xl font-black text-amber-400 mt-1">00:00</div>
+            <div class="text-xs text-slate-500 mt-1">Total Duration</div>
+          </div>
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg / Question</div>
+            <div id="resultAvgTime" class="text-4xl font-black text-purple-400 mt-1">0.0s</div>
+            <div class="text-xs text-slate-500 mt-1">Per Question</div>
+          </div>
+        </div>
+
+        <!-- Performance Breakdown -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- Table-wise Performance -->
+          <div class="acrylic rounded-2xl p-5 shadow-xl">
+            <h3 class="font-black text-sm text-emerald-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span>📊</span> Performance by Table
+            </h3>
+            <div id="tablePerformance" class="space-y-2 max-h-64 overflow-y-auto">
+              <!-- Generated dynamically -->
+            </div>
+          </div>
+
+          <!-- Difficulty Analysis -->
+          <div class="acrylic rounded-2xl p-5 shadow-xl">
+            <h3 class="font-black text-sm text-sky-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span>🎯</span> Difficulty Analysis
+            </h3>
+            <div id="difficultyAnalysis" class="space-y-3">
+              <!-- Generated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Review -->
+        <div class="acrylic rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-black text-sm text-rose-400 uppercase tracking-wider flex items-center gap-2">
+              <span>🔍</span> Detailed Review
+            </h3>
+            <select id="reviewFilter" onchange="renderReview()" class="acrylic-input text-xs font-semibold text-white rounded-lg px-3 py-1.5 focus:outline-none">
+              <option value="all">All Questions</option>
+              <option value="wrong">Wrong Only</option>
+              <option value="correct">Correct Only</option>
+            </select>
+          </div>
+          <div id="reviewContainer" class="space-y-2 max-h-96 overflow-y-auto">
+            <!-- Generated dynamically -->
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button onclick="retakeQuiz()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition">
+            🔄 Retake Same Quiz
+          </button>
+          <button onclick="newQuiz()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+            ⚙️ New Configuration
+          </button>
+          <button onclick="exportResults()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/30 transition">
+            📥 Export Report
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+  <!-- Notification Toast Box -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-[#090d16] text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold transition-all transform translate-y-20 opacity-0 flex items-center gap-2 border border-slate-700">
+    <span id="toastIcon">✨</span>
+    <span id="toastMsg">Changes saved!</span>
+  </div>
+  <!-- Canvas Confetti is loaded in <head> -->
+  <!-- Application Logic -->
+  <script>
+    function showToast(msg, icon = '✨') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+      toastMsg.textContent = msg;
+      toastIcon.textContent = icon;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2200);
+    }
+
+    // ===================== Practice Lab Module =====================
+    let practiceState = {
+      selectedTables: [],
+      questions: [],
+      currentQuestionIndex: 0,
+      answers: [],
+      startTime: 0,
+      questionStartTime: 0,
+      timerInterval: null,
+      timeLimit: 60,
+      totalTime: 0,
+      questionTimes: [],
+      mode: 'single',
+      advancing: false,
+      answerMode: 'choice',
+      answeredBy: {}
+    };
+
+    function initPracticeLab() {
+      renderTableCheckboxes();
+      loadPracticeConfig();
+    }
+
+    function renderTableCheckboxes() {
+      const container = document.getElementById('tableCheckboxes');
+      container.innerHTML = '';
+      for (let t = 1; t <= 30; t++) {
+        const isPrimeOrHigh = [13, 17, 19, 23, 27, 29].includes(t);
+        const label = document.createElement('label');
+        label.className = `flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition hover:bg-slate-800/50 ${isPrimeOrHigh ? 'border-l-2 border-purple-500' : ''}`;
+        label.innerHTML = `
+          <input type="checkbox" value="${t}" ${practiceState.selectedTables.includes(t) ? 'checked' : ''} onchange="toggleTable(${t})" class="rounded text-purple-500 focus:ring-purple-500 bg-slate-900 border-slate-700 w-4 h-4">
+          <span class="text-xs font-mono font-semibold ${isPrimeOrHigh ? 'text-purple-300' : 'text-slate-300'}">${t}</span>
+        `;
+        container.appendChild(label);
+      }
+    }
+
+    function toggleTable(table) {
+      const idx = practiceState.selectedTables.indexOf(table);
+      if (idx >= 0) {
+        practiceState.selectedTables.splice(idx, 1);
+      } else {
+        practiceState.selectedTables.push(table);
+      }
+      savePracticeConfig();
+    }
+
+    function selectAllTables() {
+      practiceState.selectedTables = Array.from({length: 30}, (_, i) => i + 1);
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function selectNoneTables() {
+      practiceState.selectedTables = [];
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function selectCommonTables() {
+      practiceState.selectedTables = Array.from({length: 11}, (_, i) => i + 2); // 2-12
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function selectAdvancedTables() {
+      practiceState.selectedTables = Array.from({length: 8}, (_, i) => i + 13); // 13-20
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function savePracticeConfig() {
+      const config = {
+        selectedTables: practiceState.selectedTables,
+        questionCount: document.getElementById('questionCount').value,
+        multiplierRange: document.getElementById('multiplierRange').value,
+        questionMode: document.querySelector('input[name="questionMode"]:checked').value,
+        answerMode: document.getElementById('answerMode').value,
+        timeLimit: document.getElementById('timeLimit').value,
+        shuffleQuestions: document.getElementById('shuffleQuestions').checked,
+        shuffleOptions: document.getElementById('shuffleOptions').checked,
+        showTimer: document.getElementById('showTimer').checked
+      };
+      localStorage.setItem('practiceLabConfig', JSON.stringify(config));
+    }
+
+    function loadPracticeConfig() {
+      try {
+        const saved = localStorage.getItem('practiceLabConfig');
+        if (saved) {
+          const config = JSON.parse(saved);
+          practiceState.selectedTables = config.selectedTables || [];
+          document.getElementById('questionCount').value = config.questionCount || '10';
+          document.getElementById('multiplierRange').value = config.multiplierRange || '1-10';
+          document.querySelector(`input[name="questionMode"][value="${config.questionMode || 'single'}"]`).checked = true;
+          document.getElementById('answerMode').value = config.answerMode || 'choice';
+          document.getElementById('timeLimit').value = config.timeLimit || '60';
+          document.getElementById('shuffleQuestions').checked = config.shuffleQuestions !== false;
+          document.getElementById('shuffleOptions').checked = config.shuffleOptions !== false;
+          document.getElementById('showTimer').checked = config.showTimer !== false;
+          renderTableCheckboxes();
+        } else {
+          // Default: core tables 2-12
+          practiceState.selectedTables = Array.from({length: 11}, (_, i) => i + 2);
+          renderTableCheckboxes();
+        }
+      } catch (e) {
+        practiceState.selectedTables = Array.from({length: 11}, (_, i) => i + 2);
+        renderTableCheckboxes();
+      }
+    }
+
+    function updatePracticeMode() {
+      savePracticeConfig();
+    }
+
+    function generateQuestions() {
+      const count = parseInt(document.getElementById('questionCount').value);
+      const [minM, maxM] = document.getElementById('multiplierRange').value.split('-').map(Number);
+      const tables = practiceState.selectedTables.length > 0 ? practiceState.selectedTables : [2,3,4,5,6,7,8,9,10,11,12];
+      const shuffleQ = document.getElementById('shuffleQuestions').checked;
+      const shuffleO = document.getElementById('shuffleOptions').checked;
+
+      const allQuestions = [];
+      for (const table of tables) {
+        for (let m = minM; m <= maxM; m++) {
+          allQuestions.push({ table, multiplier: m, answer: table * m });
+        }
+      }
+
+      if (shuffleQ) {
+        for (let i = allQuestions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+      }
+
+      practiceState.questions = allQuestions.slice(0, count);
+      practiceState.currentQuestionIndex = 0;
+      practiceState.answers = [];
+      practiceState.questionTimes = [];
+      practiceState.questionOptions = {};
+      practiceState.answeredBy = {};
+    }
+
+    // Answers are stored as the numeric value, so the mode can be switched mid-quiz
+    function getUserAnswer(idx) {
+      const a = practiceState.answers[idx];
+      if (a === undefined || a === null || a === -1) return undefined;
+      return a;
+    }
+
+    function setAnswerMode(mode) {
+      practiceState.answerMode = mode;
+      document.getElementById('answerMode').value = mode;
+      savePracticeConfig();
+      updateAnswerModeToggle();
+      if (practiceState.mode === 'single') renderSingleQuestion();
+      else renderListQuestions();
+    }
+
+    function updateAnswerModeToggle() {
+      ['choice', 'type'].forEach(m => {
+        const btn = document.getElementById('amBtn_' + m);
+        const on = practiceState.answerMode === m;
+        btn.className = 'px-3 py-1 rounded-lg text-xs font-bold transition ' +
+          (on ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white');
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    function isAnswerCorrect(idx) {
+      const v = getUserAnswer(idx);
+      return v !== undefined && v === practiceState.questions[idx].answer;
+    }
+
+    function onTypedInput(el) {
+      el.value = el.value.replace(/[^0-9]/g, '');
+      const idx = practiceState.currentQuestionIndex;
+      if (el.value === '') {
+        delete practiceState.answers[idx];
+      } else {
+        practiceState.answers[idx] = parseInt(el.value, 10);
+        practiceState.answeredBy[idx] = 'type';
+      }
+      document.getElementById('nextQuestionBtn').disabled = el.value === '';
+    }
+
+    function onTypedKey(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btn = document.getElementById('nextQuestionBtn');
+        if (!btn.disabled) submitAnswer();
+      }
+    }
+
+    function getOptions(qIdx) {
+      // Options must be stable across re-renders, otherwise clicking an
+      // answer reshuffles it to a new position. Generate once, cache by index.
+      if (!practiceState.questionOptions[qIdx]) {
+        practiceState.questionOptions[qIdx] = generateOptions(practiceState.questions[qIdx]);
+      }
+      return practiceState.questionOptions[qIdx];
+    }
+
+    function generateOptions(question) {
+      const correct = question.answer;
+      const options = [correct];
+      const table = question.table;
+      const mult = question.multiplier;
+
+      // Generate plausible distractors
+      const distractors = [
+        table * (mult + 1),
+        table * (mult - 1),
+        (table + 1) * mult,
+        (table - 1) * mult,
+        table * mult + table,
+        table * mult - table,
+        Math.round(correct * 1.1),
+        Math.round(correct * 0.9),
+        correct + mult,
+        correct - mult
+      ].filter(v => v > 0 && v !== correct && !options.includes(v));
+
+      while (options.length < 4 && distractors.length > 0) {
+        const idx = Math.floor(Math.random() * distractors.length);
+        options.push(distractors.splice(idx, 1)[0]);
+      }
+
+      // Fill remaining with random numbers if needed
+      while (options.length < 4) {
+        const rand = correct + Math.floor(Math.random() * 20) - 10;
+        if (rand > 0 && !options.includes(rand)) options.push(rand);
+      }
+
+      if (document.getElementById('shuffleOptions').checked) {
+        for (let i = options.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [options[i], options[j]] = [options[j], options[i]];
+        }
+      }
+
+      return options;
+    }
+
+    function startPractice() {
+      if (practiceState.selectedTables.length === 0) {
+        showToast('Please select at least one table!', '⚠️');
+        return;
+      }
+
+      generateQuestions();
+      practiceState.startTime = Date.now();
+      practiceState.totalTime = 0;
+      practiceState.mode = document.querySelector('input[name="questionMode"]:checked').value;
+      practiceState.answerMode = document.getElementById('answerMode').value;
+      updateAnswerModeToggle();
+      practiceState.timeLimit = parseInt(document.getElementById('timeLimit').value);
+
+      document.getElementById('practiceConfig').classList.add('hidden');
+      document.getElementById('practiceQuiz').classList.remove('hidden');
+      document.getElementById('practiceResults').classList.add('hidden');
+
+      if (practiceState.mode === 'single') {
+        document.getElementById('singleQuestionView').classList.remove('hidden');
+        document.getElementById('listQuestionView').classList.add('hidden');
+        renderSingleQuestion();
+        startQuestionTimer();
+      } else {
+        document.getElementById('singleQuestionView').classList.add('hidden');
+        document.getElementById('listQuestionView').classList.remove('hidden');
+        renderListQuestions();
+      }
+
+      updateQuizProgress();
+    }
+
+    function startQuestionTimer() {
+      if (practiceState.timerInterval) clearInterval(practiceState.timerInterval);
+      practiceState.questionStartTime = Date.now();
+
+      const timerEl = document.getElementById('quizTimer');
+      const showTimer = document.getElementById('showTimer').checked;
+
+      if (practiceState.timeLimit > 0 && showTimer) {
+        timerEl.classList.remove('hidden');
+        let remaining = practiceState.timeLimit;
+        timerEl.textContent = formatTime(remaining);
+
+        practiceState.timerInterval = setInterval(() => {
+          remaining--;
+          timerEl.textContent = formatTime(remaining);
+          if (remaining <= 0) {
+            clearInterval(practiceState.timerInterval);
+            autoSubmit();
+          }
+        }, 1000);
+      } else {
+        timerEl.classList.add('hidden');
+      }
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function renderSingleQuestion() {
+      const q = practiceState.questions[practiceState.currentQuestionIndex];
+      if (!q) return;
+
+      document.getElementById('questionDisplay').textContent = `${q.table} × ${q.multiplier} = ?`;
+      document.getElementById('questionMeta').textContent = `Table ${q.table} • Multiplier ${q.multiplier}`;
+
+      const grid = document.getElementById('optionsGrid');
+      const typedWrap = document.getElementById('typedAnswerWrap');
+      const typedInput = document.getElementById('typedAnswer');
+      const nextBtn = document.getElementById('nextQuestionBtn');
+      const isTyped = practiceState.answerMode === 'type';
+
+      nextBtn.parentElement.classList.toggle('hidden', !isTyped);
+      grid.classList.toggle('hidden', isTyped);
+      typedWrap.classList.toggle('hidden', !isTyped);
+      nextBtn.textContent = practiceState.currentQuestionIndex === practiceState.questions.length - 1 ? 'Finish Quiz' : 'Next Question';
+
+      if (isTyped) {
+        const existing = practiceState.answers[practiceState.currentQuestionIndex];
+        typedInput.value = (existing !== undefined && existing !== -1) ? existing : '';
+        nextBtn.disabled = typedInput.value === '';
+        typedInput.focus();
+        return;
+      }
+
+      grid.innerHTML = '';
+      const options = getOptions(practiceState.currentQuestionIndex);
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `p-4 rounded-xl font-mono text-xl font-bold transition-all border-2 ${
+          practiceState.answers[practiceState.currentQuestionIndex] === opt
+            ? 'bg-indigo-950/80 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/20'
+            : 'bg-slate-900/80 border-slate-700 text-slate-200 hover:border-sky-500 hover:bg-slate-800'
+        }`;
+        btn.textContent = opt;
+        btn.onclick = () => selectOption(idx);
+        grid.appendChild(btn);
+      });
+
+      const cur = practiceState.answers[practiceState.currentQuestionIndex];
+      nextBtn.disabled = cur === undefined || cur === -1;
+    }
+
+    function selectOption(idx) {
+      if (practiceState.advancing) return; // ignore double-clicks
+      const i = practiceState.currentQuestionIndex;
+      practiceState.answers[i] = getOptions(i)[idx];
+      practiceState.answeredBy[i] = 'choice';
+      renderSingleQuestion(); // brief highlight of the picked option
+      practiceState.advancing = true;
+      setTimeout(() => {
+        practiceState.advancing = false;
+        // skip if the timer already moved on from this question
+        if (practiceState.questionTimes.length === i) submitAnswer();
+      }, 150);
+    }
+
+    function submitAnswer() {
+      const timeTaken = (Date.now() - practiceState.questionStartTime) / 1000;
+      practiceState.questionTimes.push(timeTaken);
+      practiceState.totalTime += timeTaken;
+
+      if (practiceState.currentQuestionIndex < practiceState.questions.length - 1) {
+        practiceState.currentQuestionIndex++;
+        renderSingleQuestion();
+        startQuestionTimer();
+        updateQuizProgress();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function autoSubmit() {
+      if (practiceState.answers[practiceState.currentQuestionIndex] === undefined) {
+        practiceState.answers[practiceState.currentQuestionIndex] = -1; // timeout
+      }
+      submitAnswer();
+    }
+
+    function updateQuizProgress() {
+      const current = practiceState.currentQuestionIndex + 1;
+      const total = practiceState.questions.length;
+      document.getElementById('questionCounter').textContent = `Question ${current} of ${total}`;
+      const pct = (current / total) * 100;
+      document.getElementById('quizProgressBar').style.width = `${pct}%`;
+    }
+
+    function renderListQuestions() {
+      const tbody = document.getElementById('listQuestionsBody');
+      tbody.innerHTML = '';
+      const isTyped = practiceState.answerMode === 'type';
+
+      practiceState.questions.forEach((q, idx) => {
+        const current = practiceState.answers[idx];
+        const answered = current !== undefined && current !== -1;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/50 transition';
+
+        let control;
+        if (isTyped) {
+          control = `<input type="text" inputmode="numeric" autocomplete="off" placeholder="Type answer" id="listOption_${idx}" value="${answered ? current : ''}" oninput="this.value=this.value.replace(/[^0-9]/g,''); saveListAnswer(${idx}, this.value, 'type')" class="w-full max-w-[10rem] acrylic-input text-sm font-mono font-semibold text-white placeholder-slate-600 rounded-lg px-2 py-1 focus:outline-none">`;
+        } else {
+          const options = getOptions(idx);
+          control = `<select class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-2 py-1 focus:outline-none" id="listOption_${idx}" onchange="saveListAnswer(${idx}, this.value, 'choice')">
+              <option value="">Select answer...</option>
+              ${options.map((opt, oi) => `<option value="${oi}" ${answered && opt === current ? 'selected' : ''}>${opt}</option>`).join('')}
+            </select>`;
+        }
+
+        tr.innerHTML = `
+          <td class="py-2 px-3 font-mono text-sky-400">${idx + 1}</td>
+          <td class="py-2 px-3 font-mono text-white">${q.table} × ${q.multiplier} = ?</td>
+          <td class="py-2 px-3">${control}</td>
+          <td class="py-2 px-3" id="listStatus_${idx}">
+            ${answered ? '<span class="text-xs text-sky-400">Answered</span>' : '<span class="text-xs text-slate-500">Pending</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function saveListAnswer(qIdx, value, how) {
+      if (value === '') {
+        delete practiceState.answers[qIdx];
+        delete practiceState.answeredBy[qIdx];
+      } else if (how === 'choice') {
+        practiceState.answers[qIdx] = getOptions(qIdx)[parseInt(value, 10)];
+        practiceState.answeredBy[qIdx] = 'choice';
+      } else {
+        practiceState.answers[qIdx] = parseInt(value, 10);
+        practiceState.answeredBy[qIdx] = 'type';
+      }
+      const statusEl = document.getElementById(`listStatus_${qIdx}`);
+      statusEl.innerHTML = value === ''
+        ? '<span class="text-xs text-slate-500">Pending</span>'
+        : '<span class="text-xs text-sky-400">Answered</span>';
+    }
+
+    function finishListQuiz() {
+      const unanswered = practiceState.questions.filter((_, i) => practiceState.answers[i] === undefined).length;
+      if (unanswered > 0) {
+        if (!confirm(`${unanswered} question(s) unanswered. Finish anyway?`)) return;
+      }
+      practiceState.totalTime = 0; // Not timed in list mode
+      practiceState.questionTimes = practiceState.questions.map(() => 0);
+      finishQuiz();
+    }
+
+    function finishQuiz() {
+      if (practiceState.timerInterval) clearInterval(practiceState.timerInterval);
+      document.getElementById('practiceQuiz').classList.add('hidden');
+      document.getElementById('practiceResults').classList.remove('hidden');
+      renderResults();
+      triggerConfetti();
+    }
+
+    function renderResults() {
+      let correct = 0;
+      const tableStats = {};
+
+      practiceState.questions.forEach((q, idx) => {
+        const isCorrect = isAnswerCorrect(idx);
+        if (isCorrect) correct++;
+
+        if (!tableStats[q.table]) tableStats[q.table] = { total: 0, correct: 0 };
+        tableStats[q.table].total++;
+        if (isCorrect) tableStats[q.table].correct++;
+      });
+
+      const total = practiceState.questions.length;
+      const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+      const avgTime = practiceState.questionTimes.length > 0
+        ? (practiceState.questionTimes.reduce((a,b) => a+b, 0) / practiceState.questionTimes.length).toFixed(1)
+        : 0;
+
+      document.getElementById('resultAccuracy').textContent = `${accuracy}%`;
+      document.getElementById('resultScore').textContent = `${correct} / ${total}`;
+      document.getElementById('resultTime').textContent = formatTime(Math.round(practiceState.totalTime));
+      document.getElementById('resultAvgTime').textContent = `${avgTime}s`;
+
+      // Table performance
+      const tablePerfEl = document.getElementById('tablePerformance');
+      tablePerfEl.innerHTML = '';
+      Object.entries(tableStats).sort((a,b) => a[0] - b[0]).forEach(([table, stats]) => {
+        const pct = Math.round((stats.correct / stats.total) * 100);
+        const color = pct === 100 ? 'text-emerald-400' : pct >= 70 ? 'text-sky-400' : pct >= 40 ? 'text-amber-400' : 'text-rose-400';
+        const bgColor = pct === 100 ? 'bg-emerald-950/30' : pct >= 70 ? 'bg-sky-950/30' : pct >= 40 ? 'bg-amber-950/30' : 'bg-rose-950/30';
+        const borderColor = pct === 100 ? 'border-emerald-800' : pct >= 70 ? 'border-sky-800' : pct >= 40 ? 'border-amber-800' : 'border-rose-800';
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-xl ${bgColor} border ${borderColor} flex items-center justify-between`;
+        div.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="font-mono font-bold text-lg ${color}">Table ${table}</span>
+            <span class="text-xs font-semibold ${color}">${stats.correct}/${stats.total}</span>
+          </div>
+          <div class="w-32 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full ${color.replace('text-', 'bg-')} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+          </div>
+        `;
+        tablePerfEl.appendChild(div);
+      });
+
+      // Difficulty analysis
+      const diffEl = document.getElementById('difficultyAnalysis');
+      const easy = Object.entries(tableStats).filter(([_,s]) => (s.correct/s.total) >= 0.8).length;
+      const medium = Object.entries(tableStats).filter(([_,s]) => (s.correct/s.total) >= 0.5 && (s.correct/s.total) < 0.8).length;
+      const hard = Object.entries(tableStats).filter(([_,s]) => (s.correct/s.total) < 0.5).length;
+      diffEl.innerHTML = `
+        <div class="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800 flex items-center justify-between">
+          <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-xs font-semibold text-emerald-300">Mastered (≥80%)</span></div>
+          <span class="font-black text-lg text-emerald-400">${easy} tables</span>
+        </div>
+        <div class="p-3 rounded-xl bg-sky-950/30 border border-sky-800 flex items-center justify-between">
+          <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-sky-400"></span><span class="text-xs font-semibold text-sky-300">Learning (50-79%)</span></div>
+          <span class="font-black text-lg text-sky-400">${medium} tables</span>
+        </div>
+        <div class="p-3 rounded-xl bg-rose-950/30 border border-rose-800 flex items-center justify-between">
+          <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400"></span><span class="text-xs font-semibold text-rose-300">Needs Work (&lt;50%)</span></div>
+          <span class="font-black text-lg text-rose-400">${hard} tables</span>
+        </div>
+      `;
+
+      renderReview();
+    }
+
+    function renderReview() {
+      const filter = document.getElementById('reviewFilter').value;
+      const container = document.getElementById('reviewContainer');
+      container.innerHTML = '';
+
+      practiceState.questions.forEach((q, idx) => {
+        const isCorrect = isAnswerCorrect(idx);
+        const userAnswer = getUserAnswer(idx);
+        const isTyped = practiceState.answeredBy[idx] === 'type';
+
+        if (filter === 'wrong' && isCorrect) return;
+        if (filter === 'correct' && !isCorrect) return;
+
+        let body;
+        if (isTyped) {
+          body = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <div class="p-2 rounded-lg font-mono font-semibold flex items-center justify-between gap-2 ${isCorrect ? 'bg-emerald-900 text-emerald-300 border border-emerald-600' : 'bg-rose-900 text-rose-300 border border-rose-600'}">
+                <span class="text-[10px] font-sans uppercase">Your answer</span>
+                <span>${userAnswer !== undefined ? userAnswer : '—'}</span>
+              </div>
+              <div class="p-2 rounded-lg font-mono font-semibold flex items-center justify-between gap-2 bg-emerald-900/50 text-emerald-400 border border-emerald-800">
+                <span class="text-[10px] font-sans uppercase">Correct</span>
+                <span>${q.answer}</span>
+              </div>
+            </div>`;
+        } else {
+          const options = getOptions(idx);
+          const userAnsIdx = options.indexOf(userAnswer);
+          body = `
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              ${options.map((opt, oi) => `
+                <div class="p-2 rounded-lg font-mono font-semibold flex-wrap ${oi === userAnsIdx ? (isCorrect ? 'bg-emerald-900 text-emerald-300 border border-emerald-600' : 'bg-rose-900 text-rose-300 border border-rose-600') : (opt === q.answer ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-300')} flex items-center gap-2">
+                  <span class="w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded ${oi === userAnsIdx ? (isCorrect ? 'bg-emerald-700 text-white' : 'bg-rose-700 text-white') : 'bg-slate-700 text-slate-500'}">${String.fromCharCode(65 + oi)}</span>
+                  <span>${opt}</span>
+                  ${oi === userAnsIdx && !isCorrect ? '<span class="text-[10px] text-rose-300">your answer</span>' : ''}
+                  ${opt === q.answer && !isCorrect ? '<span class="text-[10px] text-emerald-300">correct</span>' : ''}
+                  ${oi === userAnsIdx && isCorrect ? '<span class="text-[10px] text-emerald-300">✓</span>' : ''}
+                </div>
+              `).join('')}
+            </div>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border transition ${isCorrect ? 'bg-emerald-950/30 border-emerald-800' : 'bg-rose-950/30 border-rose-800'}`;
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-xl font-black ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}">${q.table} × ${q.multiplier} = ${q.answer}</span>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${isCorrect ? 'bg-emerald-900 text-emerald-300' : 'bg-rose-900 text-rose-300'}">${isCorrect ? '✓ Correct' : '✗ Wrong'}</span>
+            </div>
+            <span class="text-xs text-slate-500 font-mono">Time: ${practiceState.questionTimes[idx] ? practiceState.questionTimes[idx].toFixed(1) + 's' : 'N/A'}</span>
+          </div>
+          ${body}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function retakeQuiz() {
+      startPractice();
+    }
+
+    function newQuiz() {
+      if (practiceState.timerInterval) clearInterval(practiceState.timerInterval);
+      document.getElementById('practiceConfig').classList.remove('hidden');
+      document.getElementById('practiceQuiz').classList.add('hidden');
+      document.getElementById('practiceResults').classList.add('hidden');
+      document.getElementById('singleQuestionView').classList.add('hidden');
+      document.getElementById('listQuestionView').classList.add('hidden');
+    }
+
+    function exportResults() {
+      const data = {
+        date: new Date().toISOString(),
+        config: {
+          tables: practiceState.selectedTables,
+          questionCount: practiceState.questions.length,
+          multiplierRange: document.getElementById('multiplierRange').value,
+          mode: practiceState.mode,
+          answerMode: practiceState.answerMode,
+          timeLimit: practiceState.timeLimit
+        },
+        results: {
+          accuracy: document.getElementById('resultAccuracy').textContent,
+          score: document.getElementById('resultScore').textContent,
+          totalTime: document.getElementById('resultTime').textContent,
+          avgTime: document.getElementById('resultAvgTime').textContent
+        },
+        details: practiceState.questions.map((q, idx) => {
+          const userAnswer = getUserAnswer(idx);
+          const isCorrect = isAnswerCorrect(idx);
+          return {
+            question: `${q.table} × ${q.multiplier}`,
+            correctAnswer: q.answer,
+            yourAnswer: userAnswer !== undefined ? userAnswer : 'No answer',
+            correct: isCorrect,
+            time: practiceState.questionTimes[idx] ? practiceState.questionTimes[idx].toFixed(1) : 0
+          };
+        })
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `practice-results-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Results exported!', '📥');
+    }
+
+    function initPage() {
+      initPracticeLab();
+    }
+    window.addEventListener("DOMContentLoaded", initPage);
+  </script>
+</body>
+</html>

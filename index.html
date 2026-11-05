@@ -10,17 +10,20 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['"Inter"', 'sans-serif'],
+            display: ['"Space Grotesk"', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
@@ -150,12 +153,73 @@
     .answer-hidden:hover {
       filter: blur(0px);
     }
+
+    /* Visible focus rings — WCAG 2.2 focus-appearance (2–4px, 3:1 state contrast) */
+    input:focus-visible, textarea:focus-visible, select:focus-visible,
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid rgba(99, 102, 241, 0.85);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+
+    /* GSAP reveal words: must be block-level so translate-y works */
+    .reveal-word {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+
+    /* Gentle floating logo */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .animate-float { animation: none; }
+    }
+
+    /* Acrylic / Glassmorphism Theme (merged from practice.html) */
+    .acrylic {
+      background: rgba(17, 24, 39, 0.55);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .acrylic-light {
+      background: rgba(24, 32, 48, 0.45);
+      backdrop-filter: blur(14px) saturate(130%);
+      -webkit-backdrop-filter: blur(14px) saturate(130%);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .acrylic-input {
+      background: rgba(2, 6, 23, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .acrylic-input:focus {
+      border-color: rgba(129, 140, 248, 0.6);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    select option { background: #0f172a; color: #f8fafc; }
+    input[type="checkbox"], input[type="radio"] { accent-color: #10b981; }
   </style>
 </head>
-<body class="bg-[#0b0f19] text-slate-100 antialiased min-h-screen">
+<body class="bg-black text-slate-100 antialiased min-h-screen relative">
+
+    <!-- Strata WebGL Background -->
+    <canvas id="c" class="fixed inset-0 w-full h-full z-0 pointer-events-none"></canvas>
+
+    <!-- Radial shadow overlay to help text readability over canvas -->
+    <div class="absolute inset-0 pointer-events-none z-[1]" style="background: radial-gradient(ellipse 70% 50% at 50% 55%, rgba(5,5,16,0.6) 0%, transparent 70%);"></div>
 
   <!-- Top Hero Bar -->
-  <header class="bg-gradient-to-r from-slate-950 via-[#0f172a] to-slate-950 text-white shadow-2xl border-b border-slate-800">
+  <header class="bg-gradient-to-r from-slate-950 via-[#0f172a] to-slate-950 text-white shadow-2xl border-b border-slate-800 relative z-30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -166,9 +230,9 @@
               Live Sync Active
             </span>
           </div>
-          <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2">
-            <img src="logo.jpg" alt="Logo" class="h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-contain">
-            NOVEMBER 2026 <span class="bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">DAILY TRACKER</span>
+          <h1 id="heroTitle" class="text-2xl sm:text-3xl font-black tracking-tight font-display bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent flex items-center gap-2">
+            <img src="logo.jpg" alt="Logo" class="h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-contain animate-float">
+            <span class="reveal-word inline-block">NOVEMBER 2026</span> <span class="reveal-word inline-block bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">DAILY TRACKER</span>
           </h1>
           <p class="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">
             
@@ -183,9 +247,9 @@
           <button id="tabBlueprintBtn" onclick="switchView('blueprint')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1e293b] text-slate-300 hover:text-white hover:bg-slate-700 transition-all border border-slate-700">
             ⚡ Speed Arsenal
           </button>
-          <a href="practice.html" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1e293b] text-slate-300 hover:text-white hover:bg-slate-700 transition-all border border-slate-700 inline-flex items-center">
-            🧪 Practice Lab
-          </a>
+          <button id="tabPracticeBtn" onclick="switchView('practice')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1e293b] text-slate-300 hover:text-white hover:bg-slate-700 transition-all border border-slate-700">
+          🧪 Practice Lab
+          </button>
         </div>
       </div>
 
@@ -217,10 +281,10 @@
   </header>
 
   <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 space-y-6 relative z-30">
   <div id="viewTracker" class="space-y-6">
     <!-- Live Metrics Dashboard Bar -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 no-print">
+    <section id="metricsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 no-print">
       <!-- Total Checks -->
       <div class="bg-[#111827] rounded-2xl p-4 shadow-xl border border-slate-800/90 flex items-center justify-between">
         <div>
@@ -547,7 +611,7 @@
       </div>
 
       <!-- 8 Disciplines Detail Target Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div id="disciplinesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- 1. Tables -->
         <div class="bg-[#111827] rounded-2xl p-4 shadow-xl border-t-4 border-purple-500 border border-slate-800 flex flex-col justify-between">
@@ -755,7 +819,1434 @@
 
     </div>
 
+  <!-- Practice Lab (merged from practice.html) -->
+    <div id="viewPractice" class="space-y-6 hidden">
+
+      <!-- Practice Lab Banner -->
+      <div class="acrylic text-white rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="max-w-2xl">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full">Practice Lab & Quiz Engine</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-300 rounded-full border border-purple-500/30">Multiplication Mastery</span>
+          </div>
+          <h2 class="text-2xl font-black tracking-tight">Interactive Multiplication Practice</h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            Configure your practice set, take timed quizzes, and review detailed analytics with instant feedback.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="startPracticeBtn" onclick="startPractice()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition">
+            ▶ Start Quiz
+          </button>
+        </div>
+      </div>
+
+      <!-- Configuration Panel -->
+      <div id="practiceConfig" class="acrylic rounded-2xl p-5 shadow-xl space-y-5">
+        <h3 class="font-black text-sm text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+          <span>⚙️</span> Quiz Configuration
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Table Selection -->
+          <div class="md:col-span-2">
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Select Tables (1-30)</label>
+            <div id="tableCheckboxes" class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-48 overflow-y-auto p-2 acrylic-light rounded-xl">
+              <!-- Generated dynamically -->
+            </div>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <button onclick="selectAllTables()" class="px-3 py-1.5 text-xs font-bold bg-indigo-950/80 text-indigo-300 border border-indigo-800 hover:bg-indigo-900 rounded-lg transition">All</button>
+              <button onclick="selectNoneTables()" class="px-3 py-1.5 text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 rounded-lg transition">None</button>
+              <button onclick="selectCommonTables()" class="px-3 py-1.5 text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-800 hover:bg-amber-900 rounded-lg transition">Core (2-12)</button>
+              <button onclick="selectAdvancedTables()" class="px-3 py-1.5 text-xs font-bold bg-purple-950/80 text-purple-300 border border-purple-800 hover:bg-purple-900 rounded-lg transition">Advanced (13-20)</button>
+            </div>
+          </div>
+
+          <!-- Question Count -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Questions per Quiz</label>
+            <select id="questionCount" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="5">5 Questions</option>
+              <option value="10" selected>10 Questions</option>
+              <option value="15">15 Questions</option>
+              <option value="20">20 Questions</option>
+              <option value="25">25 Questions</option>
+              <option value="30">30 Questions</option>
+            </select>
+          </div>
+
+          <!-- Multiplier Range -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Multiplier Range</label>
+            <select id="multiplierRange" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="1-10" selected>1 – 10 (Standard, skips 1, 2, 10)</option>
+              <option value="1-12">1 – 12 (Extended, skips 1, 2, 10)</option>
+              <option value="6-12">6 – 12 (Harder, skips 10)</option>
+              <option value="11-20">11 – 20 (Challenge)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-800/50">
+          <!-- Answer Mode -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Answer Mode</label>
+            <select id="answerMode" onchange="savePracticeConfig()" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="choice" selected>Multiple Choice</option>
+              <option value="type">Type the Answer</option>
+            </select>
+          </div>
+
+          <!-- Question Mode -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Question Mode</label>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="questionMode" value="single" checked onchange="updatePracticeMode()" class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+                <span class="text-xs text-slate-300">One at a Time</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="questionMode" value="list" onchange="updatePracticeMode()" class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+                <span class="text-xs text-slate-300">List View</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Timer -->
+          <div>
+            <label class="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Time Limit</label>
+            <select id="timeLimit" class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-3 py-2 focus:outline-none">
+              <option value="0">No Timer</option>
+              <option value="30">30 seconds</option>
+              <option value="60" selected>60 seconds</option>
+              <option value="90">90 seconds</option>
+              <option value="120">2 minutes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 border-t border-slate-800/50">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="shuffleQuestions" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+            <span class="text-xs text-slate-300">Shuffle Questions</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="shuffleOptions" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+            <span class="text-xs text-slate-300">Shuffle Options</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="showTimer" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700">
+            <span class="text-xs text-slate-300">Show Timer</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Quiz Interface -->
+      <div id="practiceQuiz" class="hidden space-y-5 max-w-4xl mx-auto w-full">
+        <!-- Progress Header -->
+        <div class="acrylic rounded-2xl p-4 shadow-xl">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-4">
+              <div id="questionCounter" class="text-sm font-bold text-white">Question 1 of 10</div>
+              <div id="quizTimer" class="text-lg font-mono font-black text-sky-400 hidden">01:00</div>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+              <div id="answerModeToggle" class="inline-flex self-start p-1 rounded-xl bg-slate-900/80 border border-slate-700" role="group" aria-label="Answer mode">
+                <button type="button" id="amBtn_choice" onclick="setAnswerMode('choice')" class="px-3 py-1 rounded-lg text-xs font-bold transition">Choices</button>
+                <button type="button" id="amBtn_type" onclick="setAnswerMode('type')" class="px-3 py-1 rounded-lg text-xs font-bold transition">Type</button>
+              </div>
+              <div id="progressBarContainer" class="w-full sm:w-56">
+                <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div id="quizProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-sky-400 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single Question View -->
+        <div id="singleQuestionView" class="acrylic rounded-2xl p-6 shadow-xl">
+          <div id="currentQuestion" class="text-center mb-6">
+            <div class="text-4xl sm:text-5xl font-black font-mono text-white mb-2" id="questionDisplay">7 × 8 = ?</div>
+            <div class="text-xs text-slate-400" id="questionMeta">Table 7 • Multiplier 8</div>
+          </div>
+          <div id="optionsGrid" class="grid grid-cols-2 gap-3">
+            <!-- Options generated dynamically -->
+          </div>
+          <div id="typedAnswerWrap" class="hidden max-w-xs mx-auto">
+            <input id="typedAnswer" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="Type your answer"
+              oninput="onTypedInput(this)" onkeydown="onTypedKey(event)"
+              class="w-full acrylic-input text-center font-mono text-3xl font-black text-white placeholder-slate-600 rounded-xl px-4 py-3 focus:outline-none">
+            <p class="text-[11px] text-slate-500 text-center mt-2">Numbers only. Press Enter to continue.</p>
+          </div>
+          <div class="flex justify-center mt-6 pt-4 border-t border-slate-800/50">
+            <button id="nextQuestionBtn" onclick="submitAnswer()" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              Next Question
+            </button>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listQuestionView" class="hidden acrylic rounded-2xl p-4 shadow-xl overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-xs text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
+                <th class="py-2 px-3 text-left">#</th>
+                <th class="py-2 px-3 text-left">Question</th>
+                <th class="py-2 px-3 text-left">Your Answer</th>
+                <th class="py-2 px-3 text-left">Status</th>
+              </tr>
+            </thead>
+            <tbody id="listQuestionsBody" class="divide-y divide-slate-800/50">
+              <!-- Generated dynamically -->
+            </tbody>
+          </table>
+          <div class="flex justify-end mt-4 pt-4 border-t border-slate-800/50">
+            <button onclick="finishListQuiz()" class="px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition">
+              Finish Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results & Analytics -->
+      <div id="practiceResults" class="hidden space-y-5">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Accuracy</div>
+            <div id="resultAccuracy" class="text-4xl font-black text-emerald-400 mt-1">0%</div>
+            <div class="text-xs text-slate-500 mt-1">Correct / Total</div>
+          </div>
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Score</div>
+            <div id="resultScore" class="text-4xl font-black text-sky-400 mt-1">0 / 0</div>
+            <div class="text-xs text-slate-500 mt-1">Points Earned</div>
+          </div>
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Time Taken</div>
+            <div id="resultTime" class="text-4xl font-black text-amber-400 mt-1">00:00</div>
+            <div class="text-xs text-slate-500 mt-1">Total Duration</div>
+          </div>
+          <div class="acrylic rounded-2xl p-5 shadow-xl text-center">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg / Question</div>
+            <div id="resultAvgTime" class="text-4xl font-black text-purple-400 mt-1">0.0s</div>
+            <div class="text-xs text-slate-500 mt-1">Per Question</div>
+          </div>
+        </div>
+
+        <!-- Performance Breakdown -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- Table-wise Performance -->
+          <div class="acrylic rounded-2xl p-5 shadow-xl">
+            <h3 class="font-black text-sm text-emerald-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span>📊</span> Performance by Table
+            </h3>
+            <div id="tablePerformance" class="space-y-2 max-h-64 overflow-y-auto">
+              <!-- Generated dynamically -->
+            </div>
+          </div>
+
+          <!-- Difficulty Analysis -->
+          <div class="acrylic rounded-2xl p-5 shadow-xl">
+            <h3 class="font-black text-sm text-sky-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span>🎯</span> Difficulty Analysis
+            </h3>
+            <div id="difficultyAnalysis" class="space-y-3">
+              <!-- Generated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Review -->
+        <div class="acrylic rounded-2xl p-5 shadow-xl">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-black text-sm text-rose-400 uppercase tracking-wider flex items-center gap-2">
+              <span>🔍</span> Detailed Review
+            </h3>
+            <select id="reviewFilter" onchange="renderReview()" class="acrylic-input text-xs font-semibold text-white rounded-lg px-3 py-1.5 focus:outline-none">
+              <option value="all">All Questions</option>
+              <option value="wrong">Wrong Only</option>
+              <option value="correct">Correct Only</option>
+            </select>
+          </div>
+          <div id="reviewContainer" class="space-y-2 max-h-96 overflow-y-auto">
+            <!-- Generated dynamically -->
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button onclick="retakeQuiz()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition">
+            🔄 Retake Same Quiz
+          </button>
+          <button onclick="newQuiz()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+            ⚙️ New Configuration
+          </button>
+          <button onclick="exportResults()" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/30 transition">
+            📥 Export Report
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+
   </main>
+
+  <!-- Practice Lab logic (merged from practice.html) -->
+  <script>
+    function showToast(msg, icon = '✨') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+      toastMsg.textContent = msg;
+      toastIcon.textContent = icon;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2200);
+    }
+
+    // ===================== Practice Lab Module =====================
+    let practiceState = {
+      selectedTables: [],
+      questions: [],
+      currentQuestionIndex: 0,
+      answers: [],
+      startTime: 0,
+      questionStartTime: 0,
+      timerInterval: null,
+      timeLimit: 60,
+      totalTime: 0,
+      questionTimes: [],
+      mode: 'single',
+      advancing: false,
+      answerMode: 'choice',
+      answeredBy: {}
+    };
+
+    function initPracticeLab() {
+      renderTableCheckboxes();
+      loadPracticeConfig();
+    }
+
+    function renderTableCheckboxes() {
+      const container = document.getElementById('tableCheckboxes');
+      container.innerHTML = '';
+      for (let t = 1; t <= 30; t++) {
+        const isPrimeOrHigh = [13, 17, 19, 23, 27, 29].includes(t);
+        const label = document.createElement('label');
+        label.className = `flex items-center gap-2 p-1.5 rounded-lg cursor-pointer transition hover:bg-slate-800/50 ${isPrimeOrHigh ? 'border-l-2 border-purple-500' : ''}`;
+        label.innerHTML = `
+          <input type="checkbox" value="${t}" ${practiceState.selectedTables.includes(t) ? 'checked' : ''} onchange="toggleTable(${t})" class="rounded text-purple-500 focus:ring-purple-500 bg-slate-900 border-slate-700 w-4 h-4">
+          <span class="text-xs font-mono font-semibold ${isPrimeOrHigh ? 'text-purple-300' : 'text-slate-300'}">${t}</span>
+        `;
+        container.appendChild(label);
+      }
+    }
+
+    function toggleTable(table) {
+      const idx = practiceState.selectedTables.indexOf(table);
+      if (idx >= 0) {
+        practiceState.selectedTables.splice(idx, 1);
+      } else {
+        practiceState.selectedTables.push(table);
+      }
+      savePracticeConfig();
+    }
+
+    function selectAllTables() {
+      practiceState.selectedTables = Array.from({length: 30}, (_, i) => i + 1);
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function selectNoneTables() {
+      practiceState.selectedTables = [];
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function selectCommonTables() {
+      practiceState.selectedTables = Array.from({length: 11}, (_, i) => i + 2); // 2-12
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function selectAdvancedTables() {
+      practiceState.selectedTables = Array.from({length: 8}, (_, i) => i + 13); // 13-20
+      renderTableCheckboxes();
+      savePracticeConfig();
+    }
+
+    function savePracticeConfig() {
+      const config = {
+        selectedTables: practiceState.selectedTables,
+        questionCount: document.getElementById('questionCount').value,
+        multiplierRange: document.getElementById('multiplierRange').value,
+        questionMode: document.querySelector('input[name="questionMode"]:checked').value,
+        answerMode: document.getElementById('answerMode').value,
+        timeLimit: document.getElementById('timeLimit').value,
+        shuffleQuestions: document.getElementById('shuffleQuestions').checked,
+        shuffleOptions: document.getElementById('shuffleOptions').checked,
+        showTimer: document.getElementById('showTimer').checked
+      };
+      localStorage.setItem('practiceLabConfig', JSON.stringify(config));
+    }
+
+    function loadPracticeConfig() {
+      try {
+        const saved = localStorage.getItem('practiceLabConfig');
+        if (saved) {
+          const config = JSON.parse(saved);
+          practiceState.selectedTables = config.selectedTables || [];
+          document.getElementById('questionCount').value = config.questionCount || '10';
+          document.getElementById('multiplierRange').value = config.multiplierRange || '1-10';
+          document.querySelector(`input[name="questionMode"][value="${config.questionMode || 'single'}"]`).checked = true;
+          document.getElementById('answerMode').value = config.answerMode || 'choice';
+          document.getElementById('timeLimit').value = config.timeLimit || '60';
+          document.getElementById('shuffleQuestions').checked = config.shuffleQuestions !== false;
+          document.getElementById('shuffleOptions').checked = config.shuffleOptions !== false;
+          document.getElementById('showTimer').checked = config.showTimer !== false;
+          renderTableCheckboxes();
+        } else {
+          // Default: core tables 2-12
+          practiceState.selectedTables = Array.from({length: 11}, (_, i) => i + 2);
+          renderTableCheckboxes();
+        }
+      } catch (e) {
+        practiceState.selectedTables = Array.from({length: 11}, (_, i) => i + 2);
+        renderTableCheckboxes();
+      }
+    }
+
+    function updatePracticeMode() {
+      savePracticeConfig();
+    }
+
+    // Multipliers that are never asked (too easy to be useful practice)
+    const EXCLUDED_MULTIPLIERS = [1, 2, 10];
+
+    function generateQuestions() {
+      const count = parseInt(document.getElementById('questionCount').value);
+      const [minM, maxM] = document.getElementById('multiplierRange').value.split('-').map(Number);
+      const tables = practiceState.selectedTables.length > 0 ? practiceState.selectedTables : [2,3,4,5,6,7,8,9,10,11,12];
+      const shuffleQ = document.getElementById('shuffleQuestions').checked;
+      const shuffleO = document.getElementById('shuffleOptions').checked;
+
+      const allQuestions = [];
+      for (const table of tables) {
+        for (let m = minM; m <= maxM; m++) {
+          if (EXCLUDED_MULTIPLIERS.includes(m)) continue;
+          allQuestions.push({ table, multiplier: m, answer: table * m });
+        }
+      }
+
+      if (shuffleQ) {
+        for (let i = allQuestions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+      }
+
+      practiceState.questions = allQuestions.slice(0, count);
+      practiceState.currentQuestionIndex = 0;
+      practiceState.answers = [];
+      practiceState.questionTimes = [];
+      practiceState.questionOptions = {};
+      practiceState.answeredBy = {};
+    }
+
+    // Answers are stored as the numeric value, so the mode can be switched mid-quiz
+    function getUserAnswer(idx) {
+      const a = practiceState.answers[idx];
+      if (a === undefined || a === null || a === -1) return undefined;
+      return a;
+    }
+
+    function setAnswerMode(mode) {
+      practiceState.answerMode = mode;
+      document.getElementById('answerMode').value = mode;
+      savePracticeConfig();
+      updateAnswerModeToggle();
+      if (practiceState.mode === 'single') renderSingleQuestion();
+      else renderListQuestions();
+    }
+
+    function updateAnswerModeToggle() {
+      ['choice', 'type'].forEach(m => {
+        const btn = document.getElementById('amBtn_' + m);
+        const on = practiceState.answerMode === m;
+        btn.className = 'px-3 py-1 rounded-lg text-xs font-bold transition ' +
+          (on ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-white');
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    function isAnswerCorrect(idx) {
+      const v = getUserAnswer(idx);
+      return v !== undefined && v === practiceState.questions[idx].answer;
+    }
+
+    function onTypedInput(el) {
+      el.value = el.value.replace(/[^0-9]/g, '');
+      const idx = practiceState.currentQuestionIndex;
+      if (el.value === '') {
+        delete practiceState.answers[idx];
+      } else {
+        practiceState.answers[idx] = parseInt(el.value, 10);
+        practiceState.answeredBy[idx] = 'type';
+      }
+      document.getElementById('nextQuestionBtn').disabled = el.value === '';
+    }
+
+    function onTypedKey(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const btn = document.getElementById('nextQuestionBtn');
+        if (!btn.disabled) submitAnswer();
+      }
+    }
+
+    function getOptions(qIdx) {
+      // Options must be stable across re-renders, otherwise clicking an
+      // answer reshuffles it to a new position. Generate once, cache by index.
+      if (!practiceState.questionOptions[qIdx]) {
+        practiceState.questionOptions[qIdx] = generateOptions(practiceState.questions[qIdx]);
+      }
+      return practiceState.questionOptions[qIdx];
+    }
+
+    function generateOptions(question) {
+      const correct = question.answer;
+      const options = [correct];
+      const table = question.table;
+      const mult = question.multiplier;
+
+      // Generate plausible distractors
+      const distractors = [
+        table * (mult + 1),
+        table * (mult - 1),
+        (table + 1) * mult,
+        (table - 1) * mult,
+        table * mult + table,
+        table * mult - table,
+        Math.round(correct * 1.1),
+        Math.round(correct * 0.9),
+        correct + mult,
+        correct - mult
+      ].filter(v => v > 0 && v !== correct && !options.includes(v));
+
+      while (options.length < 4 && distractors.length > 0) {
+        const idx = Math.floor(Math.random() * distractors.length);
+        options.push(distractors.splice(idx, 1)[0]);
+      }
+
+      // Fill remaining with random numbers if needed
+      while (options.length < 4) {
+        const rand = correct + Math.floor(Math.random() * 20) - 10;
+        if (rand > 0 && !options.includes(rand)) options.push(rand);
+      }
+
+      if (document.getElementById('shuffleOptions').checked) {
+        for (let i = options.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [options[i], options[j]] = [options[j], options[i]];
+        }
+      }
+
+      return options;
+    }
+
+    function startPractice() {
+      if (practiceState.selectedTables.length === 0) {
+        showToast('Please select at least one table!', '⚠️');
+        return;
+      }
+
+      generateQuestions();
+      practiceState.startTime = Date.now();
+      practiceState.totalTime = 0;
+      practiceState.mode = document.querySelector('input[name="questionMode"]:checked').value;
+      practiceState.answerMode = document.getElementById('answerMode').value;
+      updateAnswerModeToggle();
+      practiceState.timeLimit = parseInt(document.getElementById('timeLimit').value);
+
+      document.getElementById('practiceConfig').classList.add('hidden');
+      document.getElementById('practiceQuiz').classList.remove('hidden');
+      document.getElementById('practiceResults').classList.add('hidden');
+
+      if (practiceState.mode === 'single') {
+        document.getElementById('singleQuestionView').classList.remove('hidden');
+        document.getElementById('listQuestionView').classList.add('hidden');
+        renderSingleQuestion();
+        startQuestionTimer();
+      } else {
+        document.getElementById('singleQuestionView').classList.add('hidden');
+        document.getElementById('listQuestionView').classList.remove('hidden');
+        renderListQuestions();
+      }
+
+      updateQuizProgress();
+    }
+
+    function startQuestionTimer() {
+      if (practiceState.timerInterval) clearInterval(practiceState.timerInterval);
+      practiceState.questionStartTime = Date.now();
+
+      const timerEl = document.getElementById('quizTimer');
+      const showTimer = document.getElementById('showTimer').checked;
+
+      if (practiceState.timeLimit > 0 && showTimer) {
+        timerEl.classList.remove('hidden');
+        let remaining = practiceState.timeLimit;
+        timerEl.textContent = formatTime(remaining);
+
+        practiceState.timerInterval = setInterval(() => {
+          remaining--;
+          timerEl.textContent = formatTime(remaining);
+          if (remaining <= 0) {
+            clearInterval(practiceState.timerInterval);
+            autoSubmit();
+          }
+        }, 1000);
+      } else {
+        timerEl.classList.add('hidden');
+      }
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function renderSingleQuestion() {
+      const q = practiceState.questions[practiceState.currentQuestionIndex];
+      if (!q) return;
+
+      document.getElementById('questionDisplay').textContent = `${q.table} × ${q.multiplier} = ?`;
+      document.getElementById('questionMeta').textContent = `Table ${q.table} • Multiplier ${q.multiplier}`;
+
+      const grid = document.getElementById('optionsGrid');
+      const typedWrap = document.getElementById('typedAnswerWrap');
+      const typedInput = document.getElementById('typedAnswer');
+      const nextBtn = document.getElementById('nextQuestionBtn');
+      const isTyped = practiceState.answerMode === 'type';
+
+      nextBtn.parentElement.classList.toggle('hidden', !isTyped);
+      grid.classList.toggle('hidden', isTyped);
+      typedWrap.classList.toggle('hidden', !isTyped);
+      nextBtn.textContent = practiceState.currentQuestionIndex === practiceState.questions.length - 1 ? 'Finish Quiz' : 'Next Question';
+
+      if (isTyped) {
+        const existing = practiceState.answers[practiceState.currentQuestionIndex];
+        typedInput.value = (existing !== undefined && existing !== -1) ? existing : '';
+        nextBtn.disabled = typedInput.value === '';
+        typedInput.focus();
+        return;
+      }
+
+      grid.innerHTML = '';
+      const options = getOptions(practiceState.currentQuestionIndex);
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `p-4 rounded-xl font-mono text-xl font-bold transition-all border-2 ${
+          practiceState.answers[practiceState.currentQuestionIndex] === opt
+            ? 'bg-indigo-950/80 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/20'
+            : 'bg-slate-900/80 border-slate-700 text-slate-200 hover:border-sky-500 hover:bg-slate-800'
+        }`;
+        btn.textContent = opt;
+        btn.onclick = () => selectOption(idx);
+        grid.appendChild(btn);
+      });
+
+      const cur = practiceState.answers[practiceState.currentQuestionIndex];
+      nextBtn.disabled = cur === undefined || cur === -1;
+    }
+
+    function selectOption(idx) {
+      if (practiceState.advancing) return; // ignore double-clicks
+      const i = practiceState.currentQuestionIndex;
+      practiceState.answers[i] = getOptions(i)[idx];
+      practiceState.answeredBy[i] = 'choice';
+      renderSingleQuestion(); // brief highlight of the picked option
+      practiceState.advancing = true;
+      setTimeout(() => {
+        practiceState.advancing = false;
+        // skip if the timer already moved on from this question
+        if (practiceState.questionTimes.length === i) submitAnswer();
+      }, 150);
+    }
+
+    function submitAnswer() {
+      const timeTaken = (Date.now() - practiceState.questionStartTime) / 1000;
+      practiceState.questionTimes.push(timeTaken);
+      practiceState.totalTime += timeTaken;
+
+      if (practiceState.currentQuestionIndex < practiceState.questions.length - 1) {
+        practiceState.currentQuestionIndex++;
+        renderSingleQuestion();
+        startQuestionTimer();
+        updateQuizProgress();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function autoSubmit() {
+      if (practiceState.answers[practiceState.currentQuestionIndex] === undefined) {
+        practiceState.answers[practiceState.currentQuestionIndex] = -1; // timeout
+      }
+      submitAnswer();
+    }
+
+    function updateQuizProgress() {
+      const current = practiceState.currentQuestionIndex + 1;
+      const total = practiceState.questions.length;
+      document.getElementById('questionCounter').textContent = `Question ${current} of ${total}`;
+      const pct = (current / total) * 100;
+      document.getElementById('quizProgressBar').style.width = `${pct}%`;
+    }
+
+    function renderListQuestions() {
+      const tbody = document.getElementById('listQuestionsBody');
+      tbody.innerHTML = '';
+      const isTyped = practiceState.answerMode === 'type';
+
+      practiceState.questions.forEach((q, idx) => {
+        const current = practiceState.answers[idx];
+        const answered = current !== undefined && current !== -1;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/50 transition';
+
+        let control;
+        if (isTyped) {
+          control = `<input type="text" inputmode="numeric" autocomplete="off" placeholder="Type answer" id="listOption_${idx}" value="${answered ? current : ''}" oninput="this.value=this.value.replace(/[^0-9]/g,''); saveListAnswer(${idx}, this.value, 'type')" class="w-full max-w-[10rem] acrylic-input text-sm font-mono font-semibold text-white placeholder-slate-600 rounded-lg px-2 py-1 focus:outline-none">`;
+        } else {
+          const options = getOptions(idx);
+          control = `<select class="w-full acrylic-input text-sm font-semibold text-white rounded-lg px-2 py-1 focus:outline-none" id="listOption_${idx}" onchange="saveListAnswer(${idx}, this.value, 'choice')">
+              <option value="">Select answer...</option>
+              ${options.map((opt, oi) => `<option value="${oi}" ${answered && opt === current ? 'selected' : ''}>${opt}</option>`).join('')}
+            </select>`;
+        }
+
+        tr.innerHTML = `
+          <td class="py-2 px-3 font-mono text-sky-400">${idx + 1}</td>
+          <td class="py-2 px-3 font-mono text-white">${q.table} × ${q.multiplier} = ?</td>
+          <td class="py-2 px-3">${control}</td>
+          <td class="py-2 px-3" id="listStatus_${idx}">
+            ${answered ? '<span class="text-xs text-sky-400">Answered</span>' : '<span class="text-xs text-slate-500">Pending</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function saveListAnswer(qIdx, value, how) {
+      if (value === '') {
+        delete practiceState.answers[qIdx];
+        delete practiceState.answeredBy[qIdx];
+      } else if (how === 'choice') {
+        practiceState.answers[qIdx] = getOptions(qIdx)[parseInt(value, 10)];
+        practiceState.answeredBy[qIdx] = 'choice';
+      } else {
+        practiceState.answers[qIdx] = parseInt(value, 10);
+        practiceState.answeredBy[qIdx] = 'type';
+      }
+      const statusEl = document.getElementById(`listStatus_${qIdx}`);
+      statusEl.innerHTML = value === ''
+        ? '<span class="text-xs text-slate-500">Pending</span>'
+        : '<span class="text-xs text-sky-400">Answered</span>';
+    }
+
+    function finishListQuiz() {
+      const unanswered = practiceState.questions.filter((_, i) => practiceState.answers[i] === undefined).length;
+      if (unanswered > 0) {
+        if (!confirm(`${unanswered} question(s) unanswered. Finish anyway?`)) return;
+      }
+      practiceState.totalTime = 0; // Not timed in list mode
+      practiceState.questionTimes = practiceState.questions.map(() => 0);
+      finishQuiz();
+    }
+
+    function finishQuiz() {
+      if (practiceState.timerInterval) clearInterval(practiceState.timerInterval);
+      document.getElementById('practiceQuiz').classList.add('hidden');
+      document.getElementById('practiceResults').classList.remove('hidden');
+      renderResults();
+      triggerConfetti();
+    }
+
+    function renderResults() {
+      let correct = 0;
+      const tableStats = {};
+
+      practiceState.questions.forEach((q, idx) => {
+        const isCorrect = isAnswerCorrect(idx);
+        if (isCorrect) correct++;
+
+        if (!tableStats[q.table]) tableStats[q.table] = { total: 0, correct: 0 };
+        tableStats[q.table].total++;
+        if (isCorrect) tableStats[q.table].correct++;
+      });
+
+      const total = practiceState.questions.length;
+      const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+      const avgTime = practiceState.questionTimes.length > 0
+        ? (practiceState.questionTimes.reduce((a,b) => a+b, 0) / practiceState.questionTimes.length).toFixed(1)
+        : 0;
+
+      document.getElementById('resultAccuracy').textContent = `${accuracy}%`;
+      document.getElementById('resultScore').textContent = `${correct} / ${total}`;
+      document.getElementById('resultTime').textContent = formatTime(Math.round(practiceState.totalTime));
+      document.getElementById('resultAvgTime').textContent = `${avgTime}s`;
+
+      // Table performance
+      const tablePerfEl = document.getElementById('tablePerformance');
+      tablePerfEl.innerHTML = '';
+      Object.entries(tableStats).sort((a,b) => a[0] - b[0]).forEach(([table, stats]) => {
+        const pct = Math.round((stats.correct / stats.total) * 100);
+        const color = pct === 100 ? 'text-emerald-400' : pct >= 70 ? 'text-sky-400' : pct >= 40 ? 'text-amber-400' : 'text-rose-400';
+        const bgColor = pct === 100 ? 'bg-emerald-950/30' : pct >= 70 ? 'bg-sky-950/30' : pct >= 40 ? 'bg-amber-950/30' : 'bg-rose-950/30';
+        const borderColor = pct === 100 ? 'border-emerald-800' : pct >= 70 ? 'border-sky-800' : pct >= 40 ? 'border-amber-800' : 'border-rose-800';
+        const div = document.createElement('div');
+        div.className = `p-3 rounded-xl ${bgColor} border ${borderColor} flex items-center justify-between`;
+        div.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="font-mono font-bold text-lg ${color}">Table ${table}</span>
+            <span class="text-xs font-semibold ${color}">${stats.correct}/${stats.total}</span>
+          </div>
+          <div class="w-32 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full ${color.replace('text-', 'bg-')} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+          </div>
+        `;
+        tablePerfEl.appendChild(div);
+      });
+
+      // Difficulty analysis
+      const diffEl = document.getElementById('difficultyAnalysis');
+      const easy = Object.entries(tableStats).filter(([_,s]) => (s.correct/s.total) >= 0.8).length;
+      const medium = Object.entries(tableStats).filter(([_,s]) => (s.correct/s.total) >= 0.5 && (s.correct/s.total) < 0.8).length;
+      const hard = Object.entries(tableStats).filter(([_,s]) => (s.correct/s.total) < 0.5).length;
+      diffEl.innerHTML = `
+        <div class="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800 flex items-center justify-between">
+          <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-xs font-semibold text-emerald-300">Mastered (≥80%)</span></div>
+          <span class="font-black text-lg text-emerald-400">${easy} tables</span>
+        </div>
+        <div class="p-3 rounded-xl bg-sky-950/30 border border-sky-800 flex items-center justify-between">
+          <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-sky-400"></span><span class="text-xs font-semibold text-sky-300">Learning (50-79%)</span></div>
+          <span class="font-black text-lg text-sky-400">${medium} tables</span>
+        </div>
+        <div class="p-3 rounded-xl bg-rose-950/30 border border-rose-800 flex items-center justify-between">
+          <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400"></span><span class="text-xs font-semibold text-rose-300">Needs Work (&lt;50%)</span></div>
+          <span class="font-black text-lg text-rose-400">${hard} tables</span>
+        </div>
+      `;
+
+      renderReview();
+    }
+
+    function renderReview() {
+      const filter = document.getElementById('reviewFilter').value;
+      const container = document.getElementById('reviewContainer');
+      container.innerHTML = '';
+
+      practiceState.questions.forEach((q, idx) => {
+        const isCorrect = isAnswerCorrect(idx);
+        const userAnswer = getUserAnswer(idx);
+        const isTyped = practiceState.answeredBy[idx] === 'type';
+
+        if (filter === 'wrong' && isCorrect) return;
+        if (filter === 'correct' && !isCorrect) return;
+
+        let body;
+        if (isTyped) {
+          body = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              <div class="p-2 rounded-lg font-mono font-semibold flex items-center justify-between gap-2 ${isCorrect ? 'bg-emerald-900 text-emerald-300 border border-emerald-600' : 'bg-rose-900 text-rose-300 border border-rose-600'}">
+                <span class="text-[10px] font-sans uppercase">Your answer</span>
+                <span>${userAnswer !== undefined ? userAnswer : '—'}</span>
+              </div>
+              <div class="p-2 rounded-lg font-mono font-semibold flex items-center justify-between gap-2 bg-emerald-900/50 text-emerald-400 border border-emerald-800">
+                <span class="text-[10px] font-sans uppercase">Correct</span>
+                <span>${q.answer}</span>
+              </div>
+            </div>`;
+        } else {
+          const options = getOptions(idx);
+          const userAnsIdx = options.indexOf(userAnswer);
+          body = `
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              ${options.map((opt, oi) => `
+                <div class="p-2 rounded-lg font-mono font-semibold flex-wrap ${oi === userAnsIdx ? (isCorrect ? 'bg-emerald-900 text-emerald-300 border border-emerald-600' : 'bg-rose-900 text-rose-300 border border-rose-600') : (opt === q.answer ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-300')} flex items-center gap-2">
+                  <span class="w-5 h-5 flex items-center justify-center text-[10px] font-bold rounded ${oi === userAnsIdx ? (isCorrect ? 'bg-emerald-700 text-white' : 'bg-rose-700 text-white') : 'bg-slate-700 text-slate-500'}">${String.fromCharCode(65 + oi)}</span>
+                  <span>${opt}</span>
+                  ${oi === userAnsIdx && !isCorrect ? '<span class="text-[10px] text-rose-300">your answer</span>' : ''}
+                  ${opt === q.answer && !isCorrect ? '<span class="text-[10px] text-emerald-300">correct</span>' : ''}
+                  ${oi === userAnsIdx && isCorrect ? '<span class="text-[10px] text-emerald-300">✓</span>' : ''}
+                </div>
+              `).join('')}
+            </div>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border transition ${isCorrect ? 'bg-emerald-950/30 border-emerald-800' : 'bg-rose-950/30 border-rose-800'}`;
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-xl font-black ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}">${q.table} × ${q.multiplier} = ${q.answer}</span>
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${isCorrect ? 'bg-emerald-900 text-emerald-300' : 'bg-rose-900 text-rose-300'}">${isCorrect ? '✓ Correct' : '✗ Wrong'}</span>
+            </div>
+            <span class="text-xs text-slate-500 font-mono">Time: ${practiceState.questionTimes[idx] ? practiceState.questionTimes[idx].toFixed(1) + 's' : 'N/A'}</span>
+          </div>
+          ${body}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function retakeQuiz() {
+      startPractice();
+    }
+
+    function newQuiz() {
+      if (practiceState.timerInterval) clearInterval(practiceState.timerInterval);
+      document.getElementById('practiceConfig').classList.remove('hidden');
+      document.getElementById('practiceQuiz').classList.add('hidden');
+      document.getElementById('practiceResults').classList.add('hidden');
+      document.getElementById('singleQuestionView').classList.add('hidden');
+      document.getElementById('listQuestionView').classList.add('hidden');
+    }
+
+    function exportResults() {
+      const data = {
+        date: new Date().toISOString(),
+        config: {
+          tables: practiceState.selectedTables,
+          questionCount: practiceState.questions.length,
+          multiplierRange: document.getElementById('multiplierRange').value,
+          mode: practiceState.mode,
+          answerMode: practiceState.answerMode,
+          timeLimit: practiceState.timeLimit
+        },
+        results: {
+          accuracy: document.getElementById('resultAccuracy').textContent,
+          score: document.getElementById('resultScore').textContent,
+          totalTime: document.getElementById('resultTime').textContent,
+          avgTime: document.getElementById('resultAvgTime').textContent
+        },
+        details: practiceState.questions.map((q, idx) => {
+          const userAnswer = getUserAnswer(idx);
+          const isCorrect = isAnswerCorrect(idx);
+          return {
+            question: `${q.table} × ${q.multiplier}`,
+            correctAnswer: q.answer,
+            yourAnswer: userAnswer !== undefined ? userAnswer : 'No answer',
+            correct: isCorrect,
+            time: practiceState.questionTimes[idx] ? practiceState.questionTimes[idx].toFixed(1) : 0
+          };
+        })
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `practice-results-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Results exported!', '📥');
+    }
+
+    function initPage() {
+      initPracticeLab();
+    }
+    window.addEventListener("DOMContentLoaded", initPage);
+  </script>
+
+
+  <!-- Flow Canvas Background -->
+  <script>
+    (function () {
+      const canvas = document.getElementById('flow-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      let width, height;
+      let explosions = [];
+
+      function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      window.addEventListener('click', (e) => {
+        explosions.push({ x: e.clientX, y: e.clientY, radius: 0, life: 1 });
+      });
+
+      const paths = [];
+      const numPaths = 80;
+
+      for (let i = 0; i < numPaths; i++) {
+        paths.push({
+          isLeft: i % 2 === 0,
+          startY: (i / numPaths) * height * 1.4 - height * 0.2,
+          particles: [{ t: Math.random(), speed: 0.0015 + Math.random() * 0.002 }]
+        });
+      }
+
+      function getBezierPoint(t, p0, p1, p2, p3) {
+        const u = 1 - t;
+        return {
+          x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
+          y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y
+        };
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, width, height);
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        explosions.forEach(exp => {
+          exp.radius += 15;
+          exp.life -= 0.015;
+        });
+        explosions = explosions.filter(exp => exp.life > 0);
+
+        paths.forEach(path => {
+          const p0 = { x: path.isLeft ? 0 : width, y: path.startY };
+          const p1 = { x: path.isLeft ? centerX * 0.5 : width - centerX * 0.5, y: path.startY };
+          const p2 = { x: path.isLeft ? centerX * 0.8 : width - centerX * 0.8, y: centerY };
+          const p3 = { x: centerX, y: centerY };
+
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([1, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          path.particles.forEach(p => {
+            p.t += p.speed;
+            if (p.t > 1) {
+              p.t = 0;
+              path.startY += (Math.random() - 0.5) * 10;
+            }
+
+            let pos = getBezierPoint(p.t, p0, p1, p2, p3);
+
+            let dxTotal = 0, dyTotal = 0;
+            explosions.forEach(exp => {
+              let dx = pos.x - exp.x;
+              let dy = pos.y - exp.y;
+              let dist = Math.hypot(dx, dy);
+              if (dist < exp.radius + 120 && dist > exp.radius - 120) {
+                let force = (1 - Math.abs(dist - exp.radius) / 120) * exp.life;
+                dxTotal += (dx / dist) * force * 80;
+                dyTotal += (dy / dist) * force * 80;
+              }
+            });
+
+            pos.x += dxTotal;
+            pos.y += dyTotal;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillRect(pos.x - 1.5, pos.y - 1.5, 3, 3);
+          });
+        });
+
+        requestAnimationFrame(render);
+      }
+
+      render();
+    })();
+
+    // ===================== Strata WebGL Background (ported) =====================
+    // Single full-screen fragment shader: layered fbm mountains, starfield,
+    // horizon glow, and occasional meteor streaks. Mouse parallax shifts
+    // mountain layers. Runs on the canvas#c we added at the top.
+    (function () {
+      const canvas = document.getElementById('c');
+      if (!canvas) return;
+      const gl = canvas.getContext('webgl', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+      if (!gl) return;
+
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      let W, H, dpr;
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio, 2);
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      const VS = `
+      attribute vec2 a_pos;
+      void main(){ gl_Position = vec4(a_pos, 0.0, 1.0); }
+      `;
+
+      const FS = `
+      precision highp float;
+      uniform vec2 u_res;
+      uniform float u_time;
+      uniform vec2 u_mouse;
+
+      float hash(float n){ return fract(sin(n)*43758.5453123); }
+      float hash2(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+
+      float noise(float x){
+        float i = floor(x);
+        float f = fract(x);
+        f = f*f*(3.0-2.0*f);
+        return mix(hash(i), hash(i+1.0), f);
+      }
+
+      float fbm(float x, float octaves){
+        float val = 0.0;
+        float amp = 0.5;
+        float freq = 1.0;
+        for(int i = 0; i < 6; i++){
+          if(float(i) >= octaves) break;
+          val += amp * noise(x * freq);
+          freq *= 2.17;
+          amp *= 0.48;
+        }
+        return val;
+      }
+
+      float meteor(vec2 uv, float t){
+        float cycle = mod(t * 0.15, 1.0);
+        float seed = floor(t * 0.15);
+        float h = hash(seed * 7.31);
+        float h2 = hash(seed * 13.17);
+        if(h > 0.30) return 0.0;
+        vec2 start = vec2(0.2 + h2 * 0.6, 0.7 + h * 0.25);
+        vec2 dir = normalize(vec2(1.0, -0.6 - h * 0.3));
+        float progress = smoothstep(0.0, 0.7, cycle);
+        vec2 pos = start + dir * progress * 0.5;
+        vec2 toP = uv - pos;
+        float along = dot(toP, dir);
+        float perp = length(toP - dir * along);
+        float trail = smoothstep(0.0, -0.12, along) * smoothstep(-0.18, -0.04, along);
+        float core = smoothstep(0.003, 0.0, perp) * trail;
+        float glow = smoothstep(0.012, 0.0, perp) * trail * 0.3;
+        float fade = smoothstep(0.0, 0.1, cycle) * smoothstep(0.8, 0.55, cycle);
+        return (core + glow) * fade;
+      }
+
+      float stars(vec2 uv, float density){
+        vec2 cell = floor(uv * density);
+        vec2 sub = fract(uv * density);
+        float h = hash2(cell);
+        float brightness = step(0.975, h);
+        float size = 0.025 + h * 0.045;
+        float d = length(sub - vec2(hash2(cell + 100.0), hash2(cell + 200.0)));
+        float star = brightness * smoothstep(size, 0.0, d);
+        star *= 0.5 + 0.5 * sin(u_time * (1.0 + h * 3.0) + h * 6.28);
+        return star;
+      }
+
+      void main(){
+        vec2 uv = gl_FragCoord.xy / u_res;
+        float aspect = u_res.x / u_res.y;
+
+        vec2 mouse = u_mouse * 2.0 - 1.0;
+
+        vec3 skyTop    = vec3(0.015, 0.012, 0.045);
+        vec3 skyMid    = vec3(0.035, 0.025, 0.085);
+        vec3 skyBottom = vec3(0.065, 0.045, 0.14);
+
+        float skyGrad = uv.y;
+        vec3 col = mix(skyBottom, skyMid, smoothstep(0.3, 0.6, skyGrad));
+        col = mix(col, skyTop, smoothstep(0.6, 1.0, skyGrad));
+
+        float horizonY = 0.35;
+        float horizonGlow = exp(-pow((uv.y - horizonY) * 3.8, 2.0));
+        col += vec3(0.15, 0.07, 0.26) * horizonGlow * 0.8;
+
+        float centerGlow = exp(-pow((uv.x - 0.5) * 1.5, 2.0)) * exp(-pow((uv.y - horizonY) * 4.0, 2.0));
+        col += vec3(0.14, 0.10, 0.24) * centerGlow * 0.6;
+
+        float starField = stars(uv * vec2(aspect, 1.0), 60.0)
+                        + stars(uv * vec2(aspect, 1.0) + 500.0, 100.0) * 0.7
+                        + stars(uv * vec2(aspect, 1.0) + 900.0, 160.0) * 0.4;
+
+        float starMask = 1.0;
+        float xC, yS, prof, mTop, mtn, rDist, rGlow, rAmb;
+        vec3 lC;
+
+        // Layer 0
+        lC = vec3(0.14, 0.10, 0.24);
+        xC = uv.x * aspect * 1.6 + u_time * 0.006 + mouse.x * 0.010;
+        yS = mouse.y * 0.003;
+        prof = fbm(xC, 5.0) * 0.10 + fbm(xC * 0.3 + 17.0, 3.0) * 0.07;
+        mTop = 0.40 + prof + yS;
+        mtn = smoothstep(mTop + 0.003, mTop - 0.001, uv.y);
+        rDist = abs(uv.y - mTop);
+        rGlow = smoothstep(0.012, 0.0, rDist) * 0.18;
+        rAmb = smoothstep(0.04, 0.0, rDist) * 0.06;
+        col = mix(col, lC, mtn);
+        col += vec3(0.20, 0.10, 0.35) * rGlow;
+        col += vec3(0.12, 0.06, 0.22) * rAmb;
+        starMask *= (1.0 - mtn);
+
+        // Layer 1
+        lC = vec3(0.11, 0.07, 0.19);
+        xC = uv.x * aspect * 2.0 + u_time * 0.012 + mouse.x * 0.020;
+        yS = mouse.y * 0.006;
+        prof = fbm(xC, 5.0) * 0.13 + fbm(xC * 0.3 + 34.0, 3.0) * 0.091;
+        mTop = 0.33 + prof + yS;
+        mtn = smoothstep(mTop + 0.003, mTop - 0.001, uv.y);
+        rDist = abs(uv.y - mTop);
+        rGlow = smoothstep(0.012, 0.0, rDist) * 0.15;
+        rAmb = smoothstep(0.04, 0.0, rDist) * 0.045;
+        col = mix(col, lC, mtn);
+        col += vec3(0.20, 0.10, 0.35) * rGlow;
+        col += vec3(0.12, 0.06, 0.22) * rAmb;
+        starMask *= (1.0 - mtn);
+
+        // Layer 2
+        lC = vec3(0.08, 0.05, 0.14);
+        xC = uv.x * aspect * 2.6 + u_time * 0.020 + mouse.x * 0.034;
+        yS = mouse.y * 0.010;
+        prof = fbm(xC, 5.0) * 0.16 + fbm(xC * 0.3 + 51.0, 3.0) * 0.112;
+        mTop = 0.26 + prof + yS;
+        mtn = smoothstep(mTop + 0.003, mTop - 0.001, uv.y);
+        rDist = abs(uv.y - mTop);
+        rGlow = smoothstep(0.012, 0.0, rDist) * 0.12;
+        rAmb = smoothstep(0.04, 0.0, rDist) * 0.03;
+        col = mix(col, lC, mtn);
+        col += vec3(0.20, 0.10, 0.35) * rGlow;
+        col += vec3(0.12, 0.06, 0.22) * rAmb;
+        starMask *= (1.0 - mtn);
+
+        // Layer 3
+        lC = vec3(0.05, 0.03, 0.09);
+        xC = uv.x * aspect * 3.2 + u_time * 0.030 + mouse.x * 0.050;
+        yS = mouse.y * 0.015;
+        prof = fbm(xC, 5.0) * 0.14 + fbm(xC * 0.3 + 68.0, 3.0) * 0.098;
+        mTop = 0.18 + prof + yS;
+        mtn = smoothstep(mTop + 0.003, mTop - 0.001, uv.y);
+        rDist = abs(uv.y - mTop);
+        rGlow = smoothstep(0.012, 0.0, rDist) * 0.09;
+        col = mix(col, lC, mtn);
+        col += vec3(0.20, 0.10, 0.35) * rGlow;
+        starMask *= (1.0 - mtn);
+
+        // Layer 4
+        lC = vec3(0.03, 0.018, 0.055);
+        xC = uv.x * aspect * 4.0 + u_time * 0.044 + mouse.x * 0.070;
+        yS = mouse.y * 0.021;
+        prof = fbm(xC, 5.0) * 0.11 + fbm(xC * 0.3 + 85.0, 3.0) * 0.077;
+        mTop = 0.09 + prof + yS;
+        mtn = smoothstep(mTop + 0.003, mTop - 0.001, uv.y);
+        rDist = abs(uv.y - mTop);
+        rGlow = smoothstep(0.012, 0.0, rDist) * 0.06;
+        col = mix(col, lC, mtn);
+        col += vec3(0.20, 0.10, 0.35) * rGlow;
+        starMask *= (1.0 - mtn);
+
+        col += vec3(0.9, 0.8, 1.0) * starField * starMask;
+        float met = meteor(uv * vec2(aspect, 1.0), u_time);
+        col += vec3(0.8, 0.6, 1.0) * met * starMask;
+
+        float vig = 1.0 - 0.3 * pow(length((uv - 0.5) * vec2(1.1, 1.6)), 2.0);
+        col *= vig;
+
+        float haze = exp(-pow((uv.y - 0.33) * 5.0, 2.0)) * 0.05;
+        col += vec3(0.15, 0.10, 0.30) * haze;
+
+        col = pow(col, vec3(0.95));
+
+        gl_FragColor = vec4(col, 1.0);
+      }
+      `;
+
+      function createShader(src, type) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error('Shader compile error:', gl.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
+      }
+
+      const vs = createShader(VS, gl.VERTEX_SHADER);
+      const fs = createShader(FS, gl.FRAGMENT_SHADER);
+      if (!vs || !fs) return;
+      const prog = gl.createProgram();
+      gl.attachShader(prog, vs);
+      gl.attachShader(prog, fs);
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        console.error('Program link error:', gl.getProgramInfoLog(prog));
+        return;
+      }
+      gl.useProgram(prog);
+
+      const quad = new Float32Array([-1,-1, 1,-1, -1,1, 1,1]);
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+      const aPos = gl.getAttribLocation(prog, 'a_pos');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+      const uRes = gl.getUniformLocation(prog, 'u_res');
+      const uTime = gl.getUniformLocation(prog, 'u_time');
+      const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+      let mx = 0.5, my = 0.5;
+      let smx = 0.5, smy = 0.5;
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX / window.innerWidth;
+        my = 1.0 - e.clientY / window.innerHeight;
+      });
+
+      function frame(t) {
+        if (reduce) return;
+        t *= 0.001;
+        smx += (mx - smx) * 0.04;
+        smy += (my - smy) * 0.04;
+
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.uniform1f(uTime, t);
+        gl.uniform2f(uMouse, smx, smy);
+
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })();
+
+    // ===================== UI/UX Pro Max — Motion Module =====================
+    // GSAP ScrollTrigger + micro-interactions. Guarded for reduced-motion and
+    // runs only after the DOM is ready so targets exist.
+    (function () {
+      if (typeof gsap === 'undefined') return;
+      if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
+
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // ---- 1. Hero heading: staggered word reveal on load ----
+      const heroWords = document.querySelectorAll('#heroTitle .reveal-word');
+      if (heroWords.length) {
+        if (reduce) {
+          gsap.set(heroWords, { y: 0, opacity: 1 });
+        } else {
+          gsap.from(heroWords, {
+            y: '120%',
+            opacity: 0,
+            duration: 1.1,
+            ease: 'power4.out',
+            stagger: 0.12,
+            delay: 0.25
+          });
+        }
+      }
+
+      // ---- 2. Metric cards: staggered entrance ----
+      const metricCards = document.querySelectorAll('#metricsGrid .rounded-2xl');
+      if (metricCards.length) {
+        if (reduce) {
+          gsap.set(metricCards, { opacity: 1, y: 0 });
+        } else {
+          gsap.from(metricCards, {
+            opacity: 0,
+            y: 28,
+            duration: 0.6,
+            ease: 'power3.out',
+            stagger: 0.08,
+            scrollTrigger: { trigger: '#metricsGrid', start: 'top 92%' }
+          });
+        }
+      }
+
+      // ---- 3. Section headings: fade-up on scroll ----
+      document.querySelectorAll('h2, h3').forEach(h => {
+        if (reduce) { gsap.set(h, { opacity: 1, y: 0 }); return; }
+        gsap.from(h, {
+          opacity: 0,
+          y: 18,
+          duration: 0.55,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: h, start: 'top 90%' }
+        });
+      });
+
+      // ---- 4. Discipline cards: staggered grid entrance ----
+      const discCards = document.querySelectorAll('#disciplinesGrid .rounded-2xl');
+      if (discCards.length) {
+        if (reduce) {
+          gsap.set(discCards, { opacity: 1, y: 0 });
+        } else {
+          gsap.from(discCards, {
+            opacity: 0,
+            y: 24,
+            duration: 0.5,
+            ease: 'power3.out',
+            stagger: 0.06,
+            scrollTrigger: { trigger: '#disciplinesGrid', start: 'top 88%' }
+          });
+        }
+      }
+
+      // ---- 5. Magnetic hover on primary + alt buttons ----
+      document.querySelectorAll('#tabTrackerBtn, #tabBlueprintBtn, #masterToggleBtn, #syncBtn').forEach(el => {
+        if (reduce) return;
+        const xTo = gsap.quickTo(el, 'x', { duration: 0.4, ease: 'power2.out' });
+        const yTo = gsap.quickTo(el, 'y', { duration: 0.4, ease: 'power2.out' });
+        el.addEventListener('pointermove', (e) => {
+          const r = el.getBoundingClientRect();
+          const dx = e.clientX - (r.left + r.width / 2);
+          const dy = e.clientY - (r.top + r.height / 2);
+          xTo(dx * 0.18);
+          yTo(dy * 0.18);
+        });
+        el.addEventListener('pointerleave', () => { xTo(0); yTo(0); });
+      });
+
+      // ---- 6. Checkbox scale pop on toggle ----
+      document.addEventListener('change', (e) => {
+        if (e.target.closest('.habit-check')) {
+          const box = e.target.closest('td');
+          if (!box) return;
+          if (reduce) return;
+          gsap.fromTo(box, { scale: 1.18 }, { scale: 1, duration: 0.25, ease: 'back.out(1.7)' });
+        }
+      });
+
+      // ---- 7. Tab switch: directional slide ----
+      window.addEventListener('tabswitch', (e) => {
+        const dir = e.detail.to === 'blueprint' ? 1 : -1;
+        const target = document.getElementById('view' + e.detail.to.charAt(0).toUpperCase() + e.detail.to.slice(1));
+        if (!target) return;
+        gsap.fromTo(target,
+          { xPercent: dir * 4, opacity: 0 },
+          { xPercent: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }
+        );
+      });
+    })();
+  </script>
 
   <!-- Notification Toast Box -->
   <div id="toast" class="fixed bottom-5 right-5 z-50 bg-[#090d16] text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold transition-all transform translate-y-20 opacity-0 flex items-center gap-2 border border-slate-700">
@@ -1265,19 +2756,35 @@
     function switchView(viewName) {
       const trackerTab = document.getElementById('tabTrackerBtn');
       const blueprintTab = document.getElementById('tabBlueprintBtn');
+      const practiceTab = document.getElementById('tabPracticeBtn');
       const viewTracker = document.getElementById('viewTracker');
       const viewBlueprint = document.getElementById('viewBlueprint');
+      const viewPractice = document.getElementById('viewPractice');
 
-      if (viewName === 'tracker') {
-        viewTracker.classList.remove('hidden');
-        viewBlueprint.classList.add('hidden');
-        trackerTab.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 text-white shadow-indigo-500/30';
-        blueprintTab.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1e293b] text-slate-300 hover:text-white hover:bg-slate-700 transition-all border border-slate-700';
-      } else {
-        viewTracker.classList.add('hidden');
-        viewBlueprint.classList.remove('hidden');
-        blueprintTab.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 text-white shadow-indigo-500/30';
-        trackerTab.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1e293b] text-slate-300 hover:text-white hover:bg-slate-700 transition-all border border-slate-700';
+      // Dispatch a custom event so the motion module can animate the
+      // view transition directionally (forward = slide right, back = left).
+      window.dispatchEvent(new CustomEvent('tabswitch', { detail: { to: viewName } }));
+
+      const resetTab = (el, active) => {
+        if (!el) return;
+        el.className = active
+          ? 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 text-white shadow-indigo-500/30'
+          : 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#1e293b] text-slate-300 hover:text-white hover:bg-slate-700 transition-all border border-slate-700';
+      };
+
+      const views = { tracker: viewTracker, blueprint: viewBlueprint, practice: viewPractice };
+      const tabs = { tracker: trackerTab, blueprint: blueprintTab, practice: practiceTab };
+
+      for (const key in views) {
+        const el = views[key];
+        if (el) el.classList.toggle('hidden', key !== viewName);
+        resetTab(tabs[key], key === viewName);
+      }
+
+      // Practice Lab is a self-contained module; init on first show.
+      if (viewName === 'practice' && viewPractice && !viewPractice._initialized) {
+        viewPractice._initialized = true;
+        if (typeof initPracticeLab === 'function') initPracticeLab();
       }
     }
 
@@ -1443,6 +2950,22 @@
       if (appData.hiddenSections.tablesCollapsed) {
         document.getElementById('tablesContainer').classList.add('hidden');
         document.getElementById('collapseTablesText').textContent = 'Expand Tables View';
+      }
+
+      // Staggered entrance for the 30-day tracker rows (first 12 visible only,
+      // so the reveal stays snappy instead of spanning the whole table).
+      if (typeof gsap !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const rows = document.querySelectorAll('#trackerTableBody tr');
+        if (rows.length) {
+          gsap.from(Array.from(rows).slice(0, 12), {
+            opacity: 0,
+            y: 6,
+            duration: 0.22,
+            ease: 'power2.out',
+            stagger: 0.02,
+            scrollTrigger: { trigger: '#trackerTableBody', start: 'top 95%' }
+          });
+        }
       }
     });
   </script>
